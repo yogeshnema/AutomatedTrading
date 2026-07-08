@@ -18,13 +18,75 @@
     <ClCompile Include="AutomatedTrading.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BacktestService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ForwardPriceService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ImpliedVolService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="KiteInstrumentService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="KiteSession.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="KiteMarketDataService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OptionChainService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QuoteService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SignalService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VolSurfaceService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BacktestService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ForwardPriceService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImpliedVolService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KiteInstrumentService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KiteSession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="KiteMarketDataService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OptionChainService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QuoteService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SignalService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VolArbitrageModels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VolSurfaceService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.json.example">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

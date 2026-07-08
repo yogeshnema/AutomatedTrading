@@ -350,6 +350,12 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 
+# Local trading credentials
+config.json
+
+# Local market/reference data cache
+data/instruments/*.csv
+
 # BeatPulse healthcheck temp database
 healthchecksdb
 

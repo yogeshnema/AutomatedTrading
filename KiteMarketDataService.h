@@ -1,5 +1,7 @@
 #pragma once
 
+#include "KiteSession.h"
+
 #include <string>
 #include <vector>
 
@@ -16,16 +18,14 @@ struct Candle
 class KiteMarketDataService
 {
 public:
-    KiteMarketDataService(const std::string& apiKey,
-        const std::string& accessToken);
+    explicit KiteMarketDataService(const KiteSession& session);
 
     std::vector<Candle> getHistoricalCandles(
         long instrumentToken,
-        const std::string& interval,
         const std::string& from,
-        const std::string& to);
+        const std::string& to,
+        const std::string& interval);
 
 private:
-    std::string apiKey_;
-    std::string accessToken_;
+    const KiteSession& session_;
 }; 

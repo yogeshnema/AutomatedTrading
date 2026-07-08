@@ -1,0 +1,28 @@
+{
+  "kite": {
+    "api_key": "your_api_key",
+    "access_token": "your_access_token"
+  },
+  "vol_arbitrage": {
+    "expiry": "2026-07-30",
+    "spot_price": 25000.0,
+    "use_live_spot": true,
+    "spot_exchange": "NSE",
+    "spot_symbol": "NIFTY 50",
+    "india_vix": 14.5,
+    "use_live_india_vix": true,
+    "india_vix_exchange": "NSE",
+    "india_vix_symbol": "INDIA VIX",
+    "days_to_expiry": 22,
+    "risk_free_rate": 0.065,
+    "strikes_each_side": 5,
+    "z_score_threshold": 1.5,
+    "backtest_enabled": false,
+    "backtest_spot_token": 256265,
+    "backtest_vix_token": 264969,
+    "backtest_from": "2026-07-08 09:15:00",
+    "backtest_to": "2026-07-08 15:30:00",
+    "backtest_interval": "minute",
+    "backtest_holding_period_minutes": 15
+  }
+}

@@ -1,76 +1,56 @@
-#include <iostream>
-#include <string>
+#include "KiteMarketDataService.h"
 #include <vector>
-
+#include <string>
+#include <stdexcept>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
-struct Candle {
-    std::string timestamp;
-    double open;
-    double high;
-    double low;
-    double close;
-    long volume;
-};
+KiteMarketDataService::KiteMarketDataService(const KiteSession& session)
+    : session_(session)
+{
+    // initialization
+}
 
-class KiteMarketDataService {
-private:
-    std::string apiKey_;
-    std::string accessToken_;
+std::vector<Candle> KiteMarketDataService::getHistoricalCandles(long instrumentToken,
+    const std::string& from, const std::string& to, const std::string& interval)
+{
+    std::vector<Candle> candles;
 
-public:
-    KiteMarketDataService(std::string apiKey, std::string accessToken)
-        : apiKey_(std::move(apiKey)),
-        accessToken_(std::move(accessToken)) {
-    }
+    std::string url =
+        "https://api.kite.trade/instruments/historical/" +
+        std::to_string(instrumentToken) + "/" + interval;
 
-    std::vector<Candle> getHistoricalCandles(
-        long instrumentToken,
-        const std::string& interval,
-        const std::string& from,
-        const std::string& to)
-    {
-        std::string url =
-            "https://api.kite.trade/instruments/historical/" +
-            std::to_string(instrumentToken) + "/" + interval;
+    auto response = cpr::Get(
+        cpr::Url{ url },
+        session_.commonHeaders(),
+        cpr::Parameters{
+            {"from", from},
+            {"to", to}
+        }
+    );
 
-        auto response = cpr::Get(
-            cpr::Url{ url },
-            cpr::Header{
-                {"X-Kite-Version", "3"},
-                {"Authorization", "token " + apiKey_ + ":" + accessToken_}
-            },
-            cpr::Parameters{
-                {"from", from},
-                {"to", to}
-            }
+    if (response.status_code != 200) {
+        throw std::runtime_error(
+            "Kite API error: HTTP " +
+            std::to_string(response.status_code) +
+            "\n" + response.text
         );
-
-        if (response.status_code != 200) {
-            throw std::runtime_error(
-                "Kite API error: HTTP " +
-                std::to_string(response.status_code) +
-                "\n" + response.text
-            );
-        }
-
-        auto j = nlohmann::json::parse(response.text);
-
-        std::vector<Candle> candles;
-
-        for (const auto& row : j["data"]["candles"]) {
-            Candle c;
-            c.timestamp = row[0].get<std::string>();
-            c.open = row[1].get<double>();
-            c.high = row[2].get<double>();
-            c.low = row[3].get<double>();
-            c.close = row[4].get<double>();
-            c.volume = row[5].get<long>();
-
-            candles.push_back(c);
-        }
-
-        return candles;
     }
-};
+
+    auto j = nlohmann::json::parse(response.text);
+
+
+    for (const auto& row : j["data"]["candles"]) {
+        Candle c;
+        c.timestamp = row[0].get<std::string>();
+        c.open = row[1].get<double>();
+        c.high = row[2].get<double>();
+        c.low = row[3].get<double>();
+        c.close = row[4].get<double>();
+        c.volume = row[5].get<long>();
+
+        candles.push_back(c);
+    }
+
+    return candles;
+}

@@ -125,10 +125,32 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AutomatedTrading.cpp" />
+    <ClCompile Include="BacktestService.cpp" />
+    <ClCompile Include="ForwardPriceService.cpp" />
+    <ClCompile Include="ImpliedVolService.cpp" />
+    <ClCompile Include="KiteInstrumentService.cpp" />
+    <ClCompile Include="KiteSession.cpp" />
     <ClCompile Include="KiteMarketDataService.cpp" />
+    <ClCompile Include="OptionChainService.cpp" />
+    <ClCompile Include="QuoteService.cpp" />
+    <ClCompile Include="SignalService.cpp" />
+    <ClCompile Include="VolSurfaceService.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BacktestService.h" />
+    <ClInclude Include="ForwardPriceService.h" />
+    <ClInclude Include="ImpliedVolService.h" />
+    <ClInclude Include="KiteInstrumentService.h" />
+    <ClInclude Include="KiteSession.h" />
     <ClInclude Include="KiteMarketDataService.h" />
+    <ClInclude Include="OptionChainService.h" />
+    <ClInclude Include="QuoteService.h" />
+    <ClInclude Include="SignalService.h" />
+    <ClInclude Include="VolArbitrageModels.h" />
+    <ClInclude Include="VolSurfaceService.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.json.example" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
