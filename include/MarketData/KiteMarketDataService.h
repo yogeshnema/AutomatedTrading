@@ -1,19 +1,10 @@
 #pragma once
 
-#include "KiteSession.h"
+#include "MarketData/IMarketDataProvider.h"
+#include "Common/KiteSession.h"
 
 #include <string>
 #include <vector>
-
-struct Candle
-{
-    std::string timestamp;
-    double open;
-    double high;
-    double low;
-    double close;
-    long volume;
-};
 
 class KiteMarketDataService
 {

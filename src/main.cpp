@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -12,19 +13,44 @@
 
 #include <nlohmann/json.hpp>
 
-#include "BacktestService.h"
-#include "ForwardPriceService.h"
-#include "ImpliedVolService.h"
-#include "KiteInstrumentService.h"
-#include "KiteMarketDataService.h"
-#include "KiteSession.h"
-#include "OptionChainService.h"
-#include "QuoteService.h"
-#include "SignalService.h"
-#include "VolSurfaceService.h"
+#include "Risk/BacktestService.h"
+#include "Common/EventMessaging.h"
+#include "Pricing/ForwardPriceService.h"
+#include "Pricing/ImpliedVolService.h"
+#include "MarketData/IMarketDataProvider.h"
+#include "MarketData/KiteInstrumentService.h"
+#include "Common/KiteSession.h"
+#include "Common/MarketDataRecorder.h"
+#include "MarketData/OptionChainService.h"
+#include "MarketData/PublishingMarketDataProvider.h"
+#include "MarketData/QuoteService.h"
+#include "Risk/SignalService.h"
+#include "Pricing/VolSurfaceService.h"
 
 namespace
 {
+    struct MarketDataConfig
+    {
+        std::string provider;
+        std::string polygonTicker;
+        std::string polygonFrom;
+        std::string polygonTo;
+        std::string polygonInterval;
+    };
+
+    struct MessagingConfig
+    {
+        bool enabled;
+        std::string mode;
+        std::string publisherEndpoint;
+        std::string subscriberEndpoint;
+        std::string topicPrefix;
+        std::string subscription;
+        int highWaterMark;
+        std::string recordFile;
+        std::size_t recordMaximumEvents;
+    };
+
     struct VolArbitrageConfig
     {
         std::string expiry;
@@ -80,6 +106,50 @@ namespace
             strategy.value("backtest_interval", std::string("minute")),
             strategy.value("backtest_holding_period_minutes", 15),
             strategy.value("backtest_vix_token", 264969L) };
+    }
+
+    MarketDataConfig loadMarketDataConfig(const std::string& configPath)
+    {
+        std::ifstream input(configPath);
+        if (!input) {
+            throw std::runtime_error("Unable to open config file: " + configPath);
+        }
+
+        const auto config = nlohmann::json::parse(input);
+        const std::string provider =
+            config.value("market_data_provider", std::string("kite"));
+        const auto polygon = config.value("polygon", nlohmann::json::object());
+
+        return MarketDataConfig{
+            provider,
+            polygon.value("ticker", std::string("AAPL")),
+            polygon.value("from", std::string()),
+            polygon.value("to", std::string()),
+            polygon.value("interval", std::string("day"))
+        };
+    }
+
+    MessagingConfig loadMessagingConfig(const std::string& configPath)
+    {
+        std::ifstream input(configPath);
+        if (!input) {
+            throw std::runtime_error("Unable to open config file: " + configPath);
+        }
+
+        const auto config = nlohmann::json::parse(input);
+        const auto messaging = config.value("messaging", nlohmann::json::object());
+
+        return MessagingConfig{
+            messaging.value("enabled", false),
+            messaging.value("mode", std::string("publish")),
+            messaging.value("publisher_endpoint", std::string("tcp://*:5555")),
+            messaging.value("subscriber_endpoint", std::string("tcp://localhost:5555")),
+            messaging.value("topic_prefix", std::string("market.candle")),
+            messaging.value("subscription", std::string("market.candle")),
+            messaging.value("high_water_mark", 10000),
+            messaging.value("record_file", std::string("data/market-data.jsonl")),
+            messaging.value("record_maximum_events", std::size_t{ 0 })
+        };
     }
 
     double quotePrice(const OptionQuote& quote)
@@ -263,17 +333,92 @@ namespace
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     try {
-        const std::string configPath = "config.json";
+        const std::string configPath = argc > 1 ? argv[1] : "config.json";
         std::cout << "[start] loading config from " << configPath << "\n";
+        const auto messagingConfig = loadMessagingConfig(configPath);
+
+        if (messagingConfig.enabled && messagingConfig.mode == "record") {
+            std::cout << "[recorder] subscribing endpoint="
+                << messagingConfig.subscriberEndpoint
+                << " topic=" << messagingConfig.subscription
+                << " output=" << messagingConfig.recordFile << "\n";
+
+            ZeroMqEventSubscriber subscriber(
+                messagingConfig.subscriberEndpoint,
+                messagingConfig.subscription,
+                messagingConfig.highWaterMark);
+            MarketDataRecorder recorder;
+            const auto count = recorder.run(
+                subscriber,
+                messagingConfig.recordFile,
+                messagingConfig.recordMaximumEvents);
+            std::cout << "[recorder] recorded events=" << count << "\n";
+            return 0;
+        }
+
+        if (messagingConfig.enabled && messagingConfig.mode != "publish") {
+            throw std::runtime_error(
+                "Unsupported messaging mode '" + messagingConfig.mode +
+                "'. Expected 'publish' or 'record'.");
+        }
+
+        const auto marketDataConfig = loadMarketDataConfig(configPath);
+        auto provider = IMarketDataProvider::create(
+            marketDataConfig.provider, configPath);
+
+        std::unique_ptr<IEventPublisher> eventPublisher;
+        if (messagingConfig.enabled) {
+            eventPublisher = std::make_unique<ZeroMqEventPublisher>(
+                messagingConfig.publisherEndpoint,
+                messagingConfig.highWaterMark);
+            provider = std::make_unique<PublishingMarketDataProvider>(
+                std::move(provider),
+                *eventPublisher,
+                messagingConfig.topicPrefix);
+            std::cout << "[messaging] publishing endpoint="
+                << messagingConfig.publisherEndpoint
+                << " topic_prefix=" << messagingConfig.topicPrefix << "\n";
+        }
+
+        auto marketDataProvider = std::move(provider);
+        std::cout << "[provider] selected=" << marketDataProvider->providerName() << "\n";
+
+        if (marketDataProvider->providerName() == "polygon") {
+            if (marketDataConfig.polygonFrom.empty() ||
+                marketDataConfig.polygonTo.empty()) {
+                throw std::runtime_error(
+                    "Polygon 'from' and 'to' dates are required in config.json.");
+            }
+
+            std::cout << "[polygon] downloading ticker=" << marketDataConfig.polygonTicker
+                << " from=" << marketDataConfig.polygonFrom
+                << " to=" << marketDataConfig.polygonTo
+                << " interval=" << marketDataConfig.polygonInterval << "\n";
+
+            const auto candles = marketDataProvider->getHistoricalCandles(
+                marketDataConfig.polygonTicker,
+                marketDataConfig.polygonFrom,
+                marketDataConfig.polygonTo,
+                marketDataConfig.polygonInterval);
+
+            std::cout << "[polygon] candles=" << candles.size() << "\n";
+            if (!candles.empty()) {
+                std::cout << "[polygon] first=" << candles.front().timestamp
+                    << " close=" << candles.front().close
+                    << ", last=" << candles.back().timestamp
+                    << " close=" << candles.back().close << "\n";
+            }
+            return 0;
+        }
+
         const auto session = KiteSession::fromConfigFile(configPath);
         const auto strategyConfig = loadVolArbitrageConfig(configPath);
         logConfig(strategyConfig);
 
         KiteInstrumentService instrumentService(session);
-        KiteMarketDataService marketDataService(session);
         OptionChainService optionChainService;
         QuoteService quoteService(session);
         ForwardPriceService forwardPriceService;
@@ -310,8 +455,8 @@ int main()
                 << " interval=" << strategyConfig.backtestInterval
                 << "\n";
 
-            const auto spotCandles = marketDataService.getHistoricalCandles(
-                strategyConfig.backtestSpotToken,
+            const auto spotCandles = marketDataProvider->getHistoricalCandles(
+                std::to_string(strategyConfig.backtestSpotToken),
                 strategyConfig.backtestFrom,
                 strategyConfig.backtestTo,
                 strategyConfig.backtestInterval);
@@ -329,8 +474,8 @@ int main()
                 << " interval=" << strategyConfig.backtestInterval
                 << "\n";
 
-            const auto vixCandles = marketDataService.getHistoricalCandles(
-                strategyConfig.backtestVixToken,
+            const auto vixCandles = marketDataProvider->getHistoricalCandles(
+                std::to_string(strategyConfig.backtestVixToken),
                 strategyConfig.backtestFrom,
                 strategyConfig.backtestTo,
                 strategyConfig.backtestInterval);
@@ -363,8 +508,8 @@ int main()
                     << " token=" << option.instrumentToken << "\n";
 
                 try {
-                    auto candles = marketDataService.getHistoricalCandles(
-                        option.instrumentToken,
+                    auto candles = marketDataProvider->getHistoricalCandles(
+                        std::to_string(option.instrumentToken),
                         strategyConfig.backtestFrom,
                         strategyConfig.backtestTo,
                         strategyConfig.backtestInterval);

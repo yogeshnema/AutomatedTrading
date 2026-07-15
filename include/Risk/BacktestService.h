@@ -1,7 +1,7 @@
 #pragma once
 
-#include "KiteMarketDataService.h"
-#include "VolArbitrageModels.h"
+#include "MarketData/IMarketDataProvider.h"
+#include "Common/VolArbitrageModels.h"
 
 #include <map>
 #include <vector>

@@ -1,4 +1,4 @@
-#include "VolSurfaceService.h"
+#include "Pricing/VolSurfaceService.h"
 
 void VolSurfaceService::rebuild(const std::vector<ImpliedVolPoint>& impliedVols)
 {

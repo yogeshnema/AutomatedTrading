@@ -15,77 +15,122 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AutomatedTrading.cpp">
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BacktestService.cpp">
+    <ClCompile Include="src\Risk\BacktestService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ForwardPriceService.cpp">
+    <ClCompile Include="src\Networking\EventMessaging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ImpliedVolService.cpp">
+    <ClCompile Include="src\Pricing\ForwardPriceService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="KiteInstrumentService.cpp">
+    <ClCompile Include="src\Pricing\ImpliedVolService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="KiteSession.cpp">
+    <ClCompile Include="src\MarketData\IMarketDataProvider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="KiteMarketDataService.cpp">
+    <ClCompile Include="src\MarketData\KiteInstrumentService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OptionChainService.cpp">
+    <ClCompile Include="src\Networking\KiteSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QuoteService.cpp">
+    <ClCompile Include="src\MarketData\KiteMarketDataService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SignalService.cpp">
+    <ClCompile Include="src\MarketData\KiteMarketDataProvider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VolSurfaceService.cpp">
+    <ClCompile Include="src\MarketData\PolygonMarketDataProvider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarketData\MarketDataEvent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Networking\MarketDataRecorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarketData\PublishingMarketDataProvider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarketData\OptionChainService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarketData\QuoteService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Risk\SignalService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Pricing\VolSurfaceService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BacktestService.h">
+    <ClInclude Include="include\Risk\BacktestService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ForwardPriceService.h">
+    <ClInclude Include="include\Common\EventMessaging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ImpliedVolService.h">
+    <ClInclude Include="include\Pricing\ForwardPriceService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="KiteInstrumentService.h">
+    <ClInclude Include="include\Pricing\ImpliedVolService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="KiteSession.h">
+    <ClInclude Include="include\MarketData\IMarketDataProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="KiteMarketDataService.h">
+    <ClInclude Include="include\MarketData\KiteInstrumentService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OptionChainService.h">
+    <ClInclude Include="include\Common\KiteSession.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="QuoteService.h">
+    <ClInclude Include="include\MarketData\KiteMarketDataService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SignalService.h">
+    <ClInclude Include="include\MarketData\KiteMarketDataProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VolArbitrageModels.h">
+    <ClInclude Include="include\MarketData\PolygonMarketDataProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VolSurfaceService.h">
+    <ClInclude Include="include\MarketData\MarketDataEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Common\MarketDataRecorder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MarketData\PublishingMarketDataProvider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MarketData\OptionChainService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MarketData\QuoteService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Risk\SignalService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Common\VolArbitrageModels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Pricing\VolSurfaceService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json.example">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="MESSAGING.md">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
