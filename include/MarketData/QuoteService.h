@@ -1,7 +1,7 @@
 #pragma once
 
-#include "KiteSession.h"
-#include "VolArbitrageModels.h"
+#include "Common/KiteSession.h"
+#include "Common/VolArbitrageModels.h"
 
 #include <string>
 #include <vector>

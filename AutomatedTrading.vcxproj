@@ -72,6 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -84,6 +85,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -98,6 +100,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -111,6 +114,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -124,33 +128,48 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AutomatedTrading.cpp" />
-    <ClCompile Include="BacktestService.cpp" />
-    <ClCompile Include="ForwardPriceService.cpp" />
-    <ClCompile Include="ImpliedVolService.cpp" />
-    <ClCompile Include="KiteInstrumentService.cpp" />
-    <ClCompile Include="KiteSession.cpp" />
-    <ClCompile Include="KiteMarketDataService.cpp" />
-    <ClCompile Include="OptionChainService.cpp" />
-    <ClCompile Include="QuoteService.cpp" />
-    <ClCompile Include="SignalService.cpp" />
-    <ClCompile Include="VolSurfaceService.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Risk\BacktestService.cpp" />
+    <ClCompile Include="src\Networking\EventMessaging.cpp" />
+    <ClCompile Include="src\Pricing\ForwardPriceService.cpp" />
+    <ClCompile Include="src\Pricing\ImpliedVolService.cpp" />
+    <ClCompile Include="src\MarketData\IMarketDataProvider.cpp" />
+    <ClCompile Include="src\MarketData\KiteInstrumentService.cpp" />
+    <ClCompile Include="src\MarketData\KiteMarketDataProvider.cpp" />
+    <ClCompile Include="src\Networking\KiteSession.cpp" />
+    <ClCompile Include="src\MarketData\KiteMarketDataService.cpp" />
+    <ClCompile Include="src\MarketData\MarketDataEvent.cpp" />
+    <ClCompile Include="src\Networking\MarketDataRecorder.cpp" />
+    <ClCompile Include="src\MarketData\OptionChainService.cpp" />
+    <ClCompile Include="src\MarketData\PolygonMarketDataProvider.cpp" />
+    <ClCompile Include="src\MarketData\PublishingMarketDataProvider.cpp" />
+    <ClCompile Include="src\MarketData\QuoteService.cpp" />
+    <ClCompile Include="src\Risk\SignalService.cpp" />
+    <ClCompile Include="src\Pricing\VolSurfaceService.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BacktestService.h" />
-    <ClInclude Include="ForwardPriceService.h" />
-    <ClInclude Include="ImpliedVolService.h" />
-    <ClInclude Include="KiteInstrumentService.h" />
-    <ClInclude Include="KiteSession.h" />
-    <ClInclude Include="KiteMarketDataService.h" />
-    <ClInclude Include="OptionChainService.h" />
-    <ClInclude Include="QuoteService.h" />
-    <ClInclude Include="SignalService.h" />
-    <ClInclude Include="VolArbitrageModels.h" />
-    <ClInclude Include="VolSurfaceService.h" />
+    <ClInclude Include="include\Risk\BacktestService.h" />
+    <ClInclude Include="include\Common\EventMessaging.h" />
+    <ClInclude Include="include\Pricing\ForwardPriceService.h" />
+    <ClInclude Include="include\Pricing\ImpliedVolService.h" />
+    <ClInclude Include="include\MarketData\IMarketDataProvider.h" />
+    <ClInclude Include="include\MarketData\KiteInstrumentService.h" />
+    <ClInclude Include="include\MarketData\KiteMarketDataProvider.h" />
+    <ClInclude Include="include\Common\KiteSession.h" />
+    <ClInclude Include="include\MarketData\KiteMarketDataService.h" />
+    <ClInclude Include="include\MarketData\MarketDataEvent.h" />
+    <ClInclude Include="include\Common\MarketDataRecorder.h" />
+    <ClInclude Include="include\MarketData\OptionChainService.h" />
+    <ClInclude Include="include\MarketData\PolygonMarketDataProvider.h" />
+    <ClInclude Include="include\MarketData\PublishingMarketDataProvider.h" />
+    <ClInclude Include="include\MarketData\QuoteService.h" />
+    <ClInclude Include="include\Risk\SignalService.h" />
+    <ClInclude Include="include\Common\VolArbitrageModels.h" />
+    <ClInclude Include="include\Pricing\VolSurfaceService.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json.example" />
+    <None Include="MESSAGING.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
