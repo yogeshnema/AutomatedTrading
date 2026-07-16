@@ -2,23 +2,19 @@ cmake_minimum_required(VERSION 3.20)
 
 project(AutomatedTrading LANGUAGES CXX)
 
-find_package(cpr CONFIG QUIET)
-if(NOT cpr_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        cpr
-        GIT_REPOSITORY https://github.com/libcpr/cpr.git
-        GIT_TAG 1.11.2
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(cpr)
-endif()
-
+find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cppzmq CONFIG REQUIRED)
+find_package(PostgreSQL REQUIRED)
 
 add_executable(AutomatedTrading
     src/main.cpp
+    src/Analytics/Pricing/BlackScholes/BlackScholesPricer.cpp
+    src/Analytics/Pricing/PricingTypes.cpp
+    src/Database/DatabaseTypes.cpp
+    src/Database/InsertService.cpp
+    src/Database/PostgresConnection.cpp
+    src/Database/QueryService.cpp
     src/MarketData/IMarketDataProvider.cpp
     src/MarketData/KiteInstrumentService.cpp
     src/MarketData/KiteMarketDataProvider.cpp
@@ -34,6 +30,9 @@ add_executable(AutomatedTrading
     src/Pricing/ForwardPriceService.cpp
     src/Pricing/ImpliedVolService.cpp
     src/Pricing/VolSurfaceService.cpp
+    src/Products/Equity/Options/European/EuropeanVanillaOption.cpp
+    src/Products/Equity/Options/Exercise/EuropeanExercise.cpp
+    src/Products/Equity/Options/Payoffs/VanillaPayoff.cpp
     src/Risk/BacktestService.cpp
     src/Risk/SignalService.cpp
 )
@@ -50,8 +49,24 @@ target_link_libraries(AutomatedTrading
         cpr::cpr
         nlohmann_json::nlohmann_json
         cppzmq
+        PostgreSQL::PostgreSQL
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(AutomatedTrading PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(BlackScholesPricerTests
+        tests/BlackScholesPricerTests.cpp
+        src/Analytics/Pricing/BlackScholes/BlackScholesPricer.cpp
+        src/Analytics/Pricing/PricingTypes.cpp
+        src/Products/Equity/Options/European/EuropeanVanillaOption.cpp
+        src/Products/Equity/Options/Exercise/EuropeanExercise.cpp
+        src/Products/Equity/Options/Payoffs/VanillaPayoff.cpp
+    )
+    target_compile_features(BlackScholesPricerTests PRIVATE cxx_std_20)
+    target_include_directories(BlackScholesPricerTests PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    add_test(NAME BlackScholesPricerTests COMMAND BlackScholesPricerTests)
 endif()
