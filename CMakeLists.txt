@@ -6,6 +6,17 @@ find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cppzmq CONFIG REQUIRED)
 find_package(PostgreSQL REQUIRED)
+find_package(httplib CONFIG QUIET)
+if(NOT httplib_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        cpp_httplib
+        GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+        GIT_TAG v0.28.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(cpp_httplib)
+endif()
 
 add_executable(AutomatedTrading
     src/main.cpp
@@ -69,4 +80,45 @@ if(BUILD_TESTING)
     target_compile_features(BlackScholesPricerTests PRIVATE cxx_std_20)
     target_include_directories(BlackScholesPricerTests PRIVATE ${PROJECT_SOURCE_DIR}/include)
     add_test(NAME BlackScholesPricerTests COMMAND BlackScholesPricerTests)
+
+    add_executable(PricingApplicationServiceTests
+        tests/PricingApplicationServiceTests.cpp
+        src/Services/Pricing/PricingApplicationService.cpp
+        src/Services/Pricing/PostgresTradePricingRepository.cpp
+        src/Analytics/Pricing/BlackScholes/BlackScholesPricer.cpp
+        src/Analytics/Pricing/PricingTypes.cpp
+        src/Database/DatabaseTypes.cpp
+        src/Database/QueryService.cpp
+        src/Products/Equity/Options/European/EuropeanVanillaOption.cpp
+        src/Products/Equity/Options/Exercise/EuropeanExercise.cpp
+        src/Products/Equity/Options/Payoffs/VanillaPayoff.cpp
+    )
+    target_compile_features(PricingApplicationServiceTests PRIVATE cxx_std_20)
+    target_include_directories(PricingApplicationServiceTests PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    add_test(NAME PricingApplicationServiceTests COMMAND PricingApplicationServiceTests)
+endif()
+
+add_executable(PricingService
+    src/Services/Pricing/main.cpp
+    src/Services/Pricing/PostgresTradePricingRepository.cpp
+    src/Services/Pricing/PricingApplicationService.cpp
+    src/Analytics/Pricing/BlackScholes/BlackScholesPricer.cpp
+    src/Analytics/Pricing/PricingTypes.cpp
+    src/Database/DatabaseTypes.cpp
+    src/Database/PostgresConnection.cpp
+    src/Database/QueryService.cpp
+    src/Products/Equity/Options/European/EuropeanVanillaOption.cpp
+    src/Products/Equity/Options/Exercise/EuropeanExercise.cpp
+    src/Products/Equity/Options/Payoffs/VanillaPayoff.cpp
+)
+target_compile_features(PricingService PRIVATE cxx_std_20)
+target_include_directories(PricingService PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(PricingService
+    PRIVATE
+        httplib::httplib
+        nlohmann_json::nlohmann_json
+        PostgreSQL::PostgreSQL
+)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(PricingService PRIVATE -Wall -Wextra -Wpedantic)
 endif()
