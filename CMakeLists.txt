@@ -2,7 +2,18 @@ cmake_minimum_required(VERSION 3.20)
 
 project(AutomatedTrading LANGUAGES CXX)
 
-find_package(cpr CONFIG REQUIRED)
+find_package(cpr CONFIG QUIET)
+if(NOT cpr_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        cpr
+        GIT_REPOSITORY https://github.com/libcpr/cpr.git
+        GIT_TAG 1.11.2
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(cpr)
+endif()
+
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cppzmq CONFIG REQUIRED)
 
