@@ -1,0 +1,162 @@
+<mxfile host="app.diagrams.net" modified="2026-07-16T00:00:00.000Z" agent="Codex" version="24.7.17" type="device">
+  <diagram id="full-system" name="Full System Architecture">
+    <mxGraphModel dx="2200" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="Automated Trading Platform — Production Microservices Architecture" style="text;html=1;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="20" width="1320" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="clients" value="Client applications" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="360" height="350" as="geometry"/>
+        </mxCell>
+        <mxCell id="web" value="Responsive Web Frontend&#xa;React / TypeScript" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="clients">
+          <mxGeometry x="45" y="65" width="270" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="mobile" value="Android and iOS Apps&#xa;future clients using same APIs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="clients">
+          <mxGeometry x="45" y="165" width="270" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="screens" value="Screens&#xa;Market refresh status · Strategy ideas&#xa;Complex derivative pricing · Risk&#xa;Backtests · Orders (later)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="clients">
+          <mxGeometry x="45" y="260" width="270" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="edge" value="Public edge and frontend middleware" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="90" width="430" height="350" as="geometry"/>
+        </mxCell>
+        <mxCell id="ingress" value="AWS Load Balancer / EKS Ingress&#xa;TLS termination · WAF · rate limits" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="edge">
+          <mxGeometry x="50" y="55" width="330" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="gateway" value="API Gateway / Backend-for-Frontend&#xa;Authentication · authorization&#xa;API versioning · routing · response aggregation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="edge">
+          <mxGeometry x="50" y="145" width="330" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="streamGateway" value="WebSocket / SSE Gateway&#xa;translates backend events for browser/mobile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="edge">
+          <mxGeometry x="50" y="255" width="330" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="services" value="Long-running backend microservices — independently deployable containers" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="930" y="90" width="920" height="540" as="geometry"/>
+        </mxCell>
+        <mxCell id="market" value="Market Data Service&#xa;Kite / Polygon / data vendors&#xa;refresh state · normalization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+          <mxGeometry x="45" y="60" width="250" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="pricing" value="Pricing Service&#xa;Swagger / REST quick pricing&#xa;tradeId + valuationDate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+          <mxGeometry x="335" y="60" width="250" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="analytics" value="Analytics / Risk Service&#xa;Greeks · scenarios · portfolio risk" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+          <mxGeometry x="625" y="60" width="250" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="strategy" value="Strategy Service&#xa;signals · trading ideas · packages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+          <mxGeometry x="45" y="205" width="250" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="backtest" value="Backtest Service&#xa;replay · parameters · historical runs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+          <mxGeometry x="335" y="205" width="250" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="order" value="Order Service (later)&#xa;pre-trade checks · idempotency&#xa;order-platform adapter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+          <mxGeometry x="625" y="205" width="250" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="config" value="Configuration Service&#xa;models · curves · service settings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="services">
+          <mxGeometry x="45" y="340" width="250" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs" value="Job Orchestrator&#xa;async pricing/risk job IDs&#xa;retry · timeout · worker routing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+          <mxGeometry x="335" y="340" width="250" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="observability" value="Observability&#xa;logs · metrics · traces · alerts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="services">
+          <mxGeometry x="625" y="340" width="250" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="health" value="Each service: /health/live · /health/ready · OpenAPI/Swagger · structured logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="services">
+          <mxGeometry x="190" y="455" width="540" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="vendors" value="External providers and venues" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="90" width="430" height="350" as="geometry"/>
+        </mxCell>
+        <mxCell id="dataVendors" value="Market / Economic Data Vendors&#xa;Kite · Polygon · reference data&#xa;economic calendars · curves" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="vendors">
+          <mxGeometry x="50" y="65" width="330" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="orderPlatform" value="Broker / Order Platform&#xa;Kite or institutional execution venue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="vendors">
+          <mxGeometry x="50" y="190" width="330" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="identity" value="Identity Provider&#xa;OIDC / OAuth2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="vendors">
+          <mxGeometry x="50" y="290" width="330" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="middleware" value="Backend messaging and stable middleware" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="690" width="920" height="300" as="geometry"/>
+        </mxCell>
+        <mxCell id="durableMq" value="Durable Event Broker&#xa;NATS JetStream or Kafka&#xa;replay · acknowledgements · consumer groups&#xa;pricing.requested/completed · risk.updated&#xa;strategy.idea · order.status" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="middleware">
+          <mxGeometry x="50" y="65" width="360" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="zmq" value="ZeroMQ PUB/SUB&#xa;internal low-latency hot path&#xa;normalized ticks · simulated UDP packets&#xa;non-durable fan-out" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="middleware">
+          <mxGeometry x="465" y="65" width="360" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="contract" value="Versioned event schemas · correlation IDs · idempotency keys · dead-letter handling" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="middleware">
+          <mxGeometry x="180" y="235" width="560" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="persistence" value="Persistence and shared state" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="690" width="910" height="300" as="geometry"/>
+        </mxCell>
+        <mxCell id="postgres" value="PostgreSQL — system of record&#xa;configuration · instruments · economic data&#xa;trades/packages · curves · vol surfaces&#xa;market snapshots · pricing/risk results&#xa;backtest parameters and audit history" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffffff;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="persistence">
+          <mxGeometry x="55" y="60" width="360" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="redis" value="Redis — cache and live state&#xa;latest quotes · market refresh status&#xa;expensive calculation cache · job progress&#xa;risk summaries · session/rate-limit state&#xa;TTL and explicit invalidation" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffffff;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="persistence">
+          <mxGeometry x="495" y="60" width="350" height="190" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="compute" value="Accelerated calculation plane — isolated worker pools" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="1040" width="1380" height="330" as="geometry"/>
+        </mxCell>
+        <mxCell id="cpu" value="CPU Workers&#xa;SIMD / AVX&#xa;CPU affinity · NUMA pinning&#xa;io_uring · batching" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
+          <mxGeometry x="60" y="70" width="270" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="gpu" value="GPU Workers&#xa;CUDA Monte Carlo&#xa;large portfolios / scenarios" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
+          <mxGeometry x="380" y="70" width="270" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="fpga" value="FPGA / Kernel-Bypass Workers&#xa;socket bypass · DPDK / AF_XDP&#xa;simulated UDP ingestion first&#xa;hardware pricing/feed path later" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
+          <mxGeometry x="700" y="70" width="300" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="modelWorkers" value="Pricing Engines&#xa;Black-Scholes · Binomial&#xa;FDM / Crank-Nicolson · Monte Carlo&#xa;model registry selects implementation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
+          <mxGeometry x="1050" y="70" width="270" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="workerNote" value="Workers consume asynchronous jobs, persist results, update Redis, and publish completion events" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="compute">
+          <mxGeometry x="330" y="235" width="720" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="deployment" value="Deployment and delivery" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1880" y="1040" width="450" height="330" as="geometry"/>
+        </mxCell>
+        <mxCell id="github" value="GitHub Actions CI/CD&#xa;build · unit/integration tests&#xa;security scan · container publish" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="deployment">
+          <mxGeometry x="55" y="65" width="340" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="eks" value="Small AWS EKS Cluster&#xa;separate Deployments and Services&#xa;autoscaling · rolling updates&#xa;CPU and GPU node groups" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="deployment">
+          <mxGeometry x="55" y="185" width="340" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e-client-ingress" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="web" target="ingress"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-mobile-ingress" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mobile" target="ingress"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-ingress-gateway" value="HTTPS REST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="ingress" target="gateway"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-gateway-services" value="authenticated synchronous APIs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="gateway" target="pricing"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-gateway-market" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="gateway" target="market"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-gateway-analytics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="gateway" target="analytics"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-stream-client" value="WebSocket / SSE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="streamGateway" target="web"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-vendors-market" value="feeds / polling / streaming" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="dataVendors" target="market"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-order-platform" value="orders / executions" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="order" target="orderPlatform"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-market-zmq" value="hot market stream" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="market" target="zmq"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-zmq-analytics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="zmq" target="analytics"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-zmq-strategy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="zmq" target="strategy"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-services-mq" value="durable business events" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="jobs" target="durableMq"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-mq-stream" value="push updates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="durableMq" target="streamGateway"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-mq-workers" value="async jobs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="durableMq" target="cpu"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-jobs-workers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="jobs" target="modelWorkers"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-pricing-postgres" value="trades / snapshots / results" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="pricing" target="postgres"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-services-redis" value="cache / live state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="analytics" target="redis"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-workers-postgres" value="persist output" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="workerNote" target="postgres"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-workers-redis" value="update status/cache" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="workerNote" target="redis"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-ci-eks" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="github" target="eks"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-eks-services" value="deploy and scale" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="eks" target="services"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

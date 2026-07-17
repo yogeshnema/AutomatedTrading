@@ -1,0 +1,23 @@
+digraph G {
+  graph [bgcolor="#111827", pad="0.4", rankdir=TB, nodesep="0.42", ranksep="0.6", fontname="Arial", label="EXTENSIBLE PRODUCT HIERARCHY", labelloc=t, fontcolor="#e5e7eb", fontsize=24];
+  node [shape=box, style="rounded,filled", fillcolor="#1f2937", color="#38bdf8", fontcolor="#f3f4f6", fontname="Arial", fontsize=13, margin="0.18,0.12"];
+  edge [color="#94a3b8", fontcolor="#cbd5e1", fontname="Arial", fontsize=10, arrowsize=0.7];
+  product [label="IProduct", fillcolor="#172554"];
+  equity [label="IEquityProduct"];
+  option [label="IOptionProduct", fillcolor="#312e81"];
+  euro [label="European Vanilla"];
+  american [label="American / Bermudan"];
+  asian [label="Asian"];
+  barrier [label="Barrier"];
+  basket [label="Basket / Multi-asset"];
+  payoff [label="Payoff", color="#fbbf24", fillcolor="#3f2f0d"];
+  exercise [label="Exercise Rule", color="#fbbf24", fillcolor="#3f2f0d"];
+  path [label="Path Features", color="#fbbf24", fillcolor="#3f2f0d"];
+  product -> equity -> option;
+  option -> {euro american asian barrier basket};
+  option -> payoff [style=dashed, label="composed from"];
+  option -> exercise [style=dashed];
+  option -> path [style=dashed];
+  {rank=same; euro american asian barrier basket}
+  {rank=same; payoff exercise path}
+}

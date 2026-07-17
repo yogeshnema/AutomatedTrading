@@ -1,0 +1,13 @@
+digraph G {
+  graph [bgcolor="#111827", pad="0.4", rankdir=LR, nodesep="0.5", ranksep="0.65", fontname="Arial", label="LOW-COST CI/CD AND DEPLOYMENT", labelloc=t, fontcolor="#e5e7eb", fontsize=24];
+  node [shape=box, style="rounded,filled", fillcolor="#1f2937", color="#38bdf8", fontcolor="#f3f4f6", fontname="Arial", fontsize=13, margin="0.2,0.14"];
+  edge [color="#94a3b8", fontcolor="#cbd5e1", fontname="Arial", fontsize=10, arrowsize=0.7];
+  git [label="Git Push"];
+  actions [label="GitHub Actions\nBuild · Test · Scan", fillcolor="#312e81"];
+  image [label="Docker Images"];
+  ecr [label="Amazon ECR\nContainer Registry", fillcolor="#3f2f0d", color="#fbbf24"];
+  ec2 [label="Small EC2 Instance\nDocker Compose", fillcolor="#12352f", color="#34d399"];
+  subgraph cluster_host { label="INITIAL HOBBY HOST"; color="#334155"; fontcolor="#cbd5e1"; gateway [label="Frontend / API Gateway"]; services [label="Pricing · Market Data · Analytics"]; redis [label="Redis"]; pg [label="PostgreSQL"]; }
+  git -> actions -> image -> ecr -> ec2;
+  ec2 -> {gateway services redis pg};
+}

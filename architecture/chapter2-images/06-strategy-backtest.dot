@@ -1,0 +1,17 @@
+digraph G {
+  graph [bgcolor="#111827", pad="0.45", rankdir=LR, nodesep="0.65", ranksep="0.6", fontname="Arial", label="ONE STRATEGY CORE, TWO DATA SOURCES", labelloc=t, fontcolor="#e5e7eb", fontsize=24];
+  node [shape=box, style="rounded,filled", fillcolor="#1f2937", color="#38bdf8", fontcolor="#f3f4f6", fontname="Arial", fontsize=14, margin="0.23,0.16"];
+  edge [color="#94a3b8", fontcolor="#cbd5e1", fontname="Arial", fontsize=11, arrowsize=0.75];
+  live [label="Live normalized events"];
+  replay [label="Historical replay clock"];
+  core [label="SHARED STRATEGY LOGIC\nversioned rules and configuration", fillcolor="#312e81"];
+  idea [label="Versioned strategy idea", fillcolor="#12352f", color="#34d399"];
+  analysis [label="Analysis dashboard"];
+  order [label="Controlled order workflow\nfuture stage", style="rounded,dashed,filled", color="#fbbf24", fillcolor="#3f2f0d"];
+  live -> core;
+  replay -> core;
+  core -> idea -> analysis;
+  idea -> order [style=dashed, label="later"];
+  {rank=same; live replay}
+  {rank=same; analysis order}
+}
