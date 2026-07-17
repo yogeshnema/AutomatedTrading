@@ -1,0 +1,20 @@
+digraph G {
+  graph [bgcolor="#111827", pad="0.4", rankdir=TB, nodesep="0.6", ranksep="0.65", fontname="Arial", label="TWO MESSAGING PATHS", labelloc=t, fontcolor="#e5e7eb", fontsize=24];
+  node [shape=box, style="rounded,filled", fillcolor="#1f2937", color="#38bdf8", fontcolor="#f3f4f6", fontname="Arial", fontsize=14, margin="0.22,0.15"];
+  edge [color="#94a3b8", fontcolor="#cbd5e1", fontname="Arial", fontsize=11, arrowsize=0.75];
+  feed [label="Vendor or simulated UDP feed"];
+  ingest [label="Linux market-data ingestion"];
+  zmq [label="ZeroMQ\nfast, non-durable fan-out", color="#22d3ee"];
+  signal [label="Strategies + real-time analytics"];
+  request [label="Pricing or risk request"];
+  broker [label="Durable broker\nretries, replay, acknowledgement", color="#fbbf24"];
+  worker [label="CPU / GPU / FPGA worker", color="#34d399"];
+  result [label="PostgreSQL result + Redis status", color="#fb7185"];
+  complete [label="Completion event → frontend"];
+  feed -> ingest -> zmq -> signal;
+  request -> broker -> worker -> result;
+  worker -> complete;
+  {rank=same; feed; request}
+  {rank=same; ingest; broker}
+  {rank=same; signal; result}
+}
