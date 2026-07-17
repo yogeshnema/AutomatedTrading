@@ -71,6 +71,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Common\Environment.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="include\Risk\BacktestService.h">
       <Filter>Header Files</Filter>
     </ClInclude>

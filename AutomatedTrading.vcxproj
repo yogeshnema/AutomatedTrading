@@ -148,6 +148,7 @@
     <ClCompile Include="src\Pricing\VolSurfaceService.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Common\Environment.h" />
     <ClInclude Include="include\Risk\BacktestService.h" />
     <ClInclude Include="include\Common\EventMessaging.h" />
     <ClInclude Include="include\Pricing\ForwardPriceService.h" />
