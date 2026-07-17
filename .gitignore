@@ -353,6 +353,7 @@ ASALocalRun/
 
 # Local trading credentials
 config.json
+database/connection.env
 
 # Local market/reference data cache
 data/instruments/*.csv

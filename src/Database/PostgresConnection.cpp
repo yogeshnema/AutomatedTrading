@@ -1,11 +1,11 @@
 #include "Database/PostgresConnection.h"
-#include "Common/Environment.h"
 
 #include <libpq-fe.h>
 
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <cstdlib>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -18,6 +18,15 @@ namespace automated_trading::database
 {
     namespace
     {
+        std::optional<std::string> environmentValue(const char* name)
+        {
+            const char* value = std::getenv(name);
+            if (value == nullptr || *value == '\0') {
+                return std::nullopt;
+            }
+            return std::string(value);
+        }
+
         std::string resultError(PGconn* connection, PGresult* result)
         {
             const char* message = result == nullptr ? nullptr : PQresultErrorMessage(result);
@@ -58,8 +67,6 @@ namespace automated_trading::database
     PostgresConnectionConfig PostgresConnectionConfig::fromEnvironment()
     {
         PostgresConnectionConfig config;
-
-        using automated_trading::common::environmentValue;
 
         if (const auto value = environmentValue("DATABASE_HOST")) config.host = *value;
         if (const auto value = environmentValue("DATABASE_PORT")) config.port = *value;

@@ -1,5 +1,4 @@
 #include "Analytics/Pricing/BlackScholes/BlackScholesPricer.h"
-#include "Common/Environment.h"
 #include "Database/PostgresConnection.h"
 #include "Database/QueryService.h"
 #include "Services/Pricing/PostgresTradePricingRepository.h"
@@ -9,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include <charconv>
+#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <string>
@@ -20,7 +20,8 @@ namespace
 
     std::string environmentValue(const char* name, std::string fallback)
     {
-        return automated_trading::common::environmentValue(name).value_or(std::move(fallback));
+        const char* value = std::getenv(name);
+        return value == nullptr || *value == '\0' ? std::move(fallback) : std::string(value);
     }
 
     int servicePort()
