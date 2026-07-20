@@ -173,6 +173,9 @@
     <ClInclude Include="include\Risk\BacktestService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Common\Environment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\Common\EventMessaging.h">
       <Filter>Header Files</Filter>
     </ClInclude>

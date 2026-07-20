@@ -182,6 +182,7 @@
     <ClInclude Include="include\Services\Pricing\PricingApplicationService.h" />
     <ClInclude Include="include\Services\Pricing\TradePricingData.h" />
     <ClInclude Include="include\Risk\BacktestService.h" />
+    <ClInclude Include="include\Common\Environment.h" />
     <ClInclude Include="include\Common\EventMessaging.h" />
     <ClInclude Include="include\Pricing\ForwardPriceService.h" />
     <ClInclude Include="include\Pricing\ImpliedVolService.h" />
