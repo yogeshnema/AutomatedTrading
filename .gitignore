@@ -291,6 +291,7 @@ frontend/dist/
 frontend/*.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+backend_legacy_untracked_*/
 
 # Visual Studio 6 build log
 *.plg
