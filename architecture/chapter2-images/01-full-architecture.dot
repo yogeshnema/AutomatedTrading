@@ -1,0 +1,20 @@
+digraph G {
+  graph [bgcolor="#111827", pad="0.35", rankdir=LR, nodesep="0.45", ranksep="0.75", fontname="Arial", label="FULL PLATFORM ARCHITECTURE", labelloc=t, fontcolor="#e5e7eb", fontsize=24];
+  node [shape=box, style="rounded,filled", fillcolor="#1f2937", color="#38bdf8", fontcolor="#f3f4f6", fontname="Arial", fontsize=13, margin="0.18,0.12"];
+  edge [color="#94a3b8", fontcolor="#cbd5e1", fontname="Arial", fontsize=10, arrowsize=0.7];
+  clients [label="WEB FRONTEND\nAndroid & iOS later", fillcolor="#172554"];
+  edgeapi [label="HTTPS ENTRY POINT\nAPI gateway + live streams", fillcolor="#312e81"];
+  subgraph cluster_services { label="LONG-RUNNING SERVICES"; color="#334155"; fontcolor="#cbd5e1"; market [label="Market Data"]; pricing [label="Pricing"]; analytics [label="Analytics & Risk"]; strategy [label="Strategy"]; backtest [label="Backtest"]; order [label="Order — later"]; }
+  zmq [label="ZeroMQ\nlow-latency hot path", fillcolor="#3f2f0d", color="#fbbf24"];
+  mq [label="Durable Broker\nNATS JetStream / Kafka", fillcolor="#3f2f0d", color="#fbbf24"];
+  redis [label="Redis\ncache + live state", fillcolor="#3f1d2e", color="#fb7185"];
+  pg [label="PostgreSQL\nsystem of record", fillcolor="#3f1d2e", color="#fb7185"];
+  workers [label="ACCELERATED WORKERS\nCPU/SIMD · CUDA · FPGA", fillcolor="#12352f", color="#34d399"];
+  clients -> edgeapi [dir=both, label="REST + WebSocket"];
+  edgeapi -> {market pricing analytics strategy backtest order} [dir=both];
+  market -> zmq; zmq -> {analytics strategy pricing};
+  {market pricing analytics strategy backtest order} -> mq [dir=both];
+  {pricing analytics strategy backtest} -> redis [dir=both];
+  {market pricing analytics strategy backtest order} -> pg [dir=both];
+  mq -> workers; workers -> {redis pg};
+}

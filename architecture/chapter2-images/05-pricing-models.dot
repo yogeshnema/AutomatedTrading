@@ -1,0 +1,15 @@
+digraph G {
+  graph [bgcolor="#111827", pad="0.4", rankdir=LR, nodesep="0.5", ranksep="0.6", fontname="Arial", label="SCALABLE PRICING MODEL SELECTION", labelloc=t, fontcolor="#e5e7eb", fontsize=24];
+  node [shape=box, style="rounded,filled", fillcolor="#1f2937", color="#38bdf8", fontcolor="#f3f4f6", fontname="Arial", fontsize=13, margin="0.2,0.14"];
+  edge [color="#94a3b8", fontcolor="#cbd5e1", fontname="Arial", fontsize=10, arrowsize=0.7];
+  request [label="Product + Market Context\n+ Model Configuration", fillcolor="#172554"];
+  registry [label="Pricing Model Registry", fillcolor="#312e81"];
+  bs [label="ANALYTICAL\nBlack-Scholes · Black-76"];
+  tree [label="TREES\nBinomial · Trinomial"];
+  pde [label="PDE / FDM\nCrank-Nicolson"];
+  mc [label="MONTE CARLO\nCPU · SIMD · CUDA"];
+  result [label="Price + Greeks\n+ Diagnostics", fillcolor="#12352f", color="#34d399"];
+  request -> registry;
+  registry -> {bs tree pde mc};
+  {bs tree pde mc} -> result;
+}

@@ -129,6 +129,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Analytics\Pricing\BlackScholes\BlackScholesPricer.cpp" />
+    <ClCompile Include="src\Analytics\Pricing\PricingTypes.cpp" />
+    <ClCompile Include="src\Database\DatabaseTypes.cpp" />
+    <ClCompile Include="src\Database\InsertService.cpp" />
+    <ClCompile Include="src\Database\PostgresConnection.cpp" />
+    <ClCompile Include="src\Database\QueryService.cpp" />
     <ClCompile Include="src\Risk\BacktestService.cpp" />
     <ClCompile Include="src\Networking\EventMessaging.cpp" />
     <ClCompile Include="src\Pricing\ForwardPriceService.cpp" />
@@ -144,10 +150,37 @@
     <ClCompile Include="src\MarketData\PolygonMarketDataProvider.cpp" />
     <ClCompile Include="src\MarketData\PublishingMarketDataProvider.cpp" />
     <ClCompile Include="src\MarketData\QuoteService.cpp" />
+    <ClCompile Include="src\Products\Equity\Options\European\EuropeanVanillaOption.cpp" />
+    <ClCompile Include="src\Products\Equity\Options\Exercise\EuropeanExercise.cpp" />
+    <ClCompile Include="src\Products\Equity\Options\Payoffs\VanillaPayoff.cpp" />
     <ClCompile Include="src\Risk\SignalService.cpp" />
     <ClCompile Include="src\Pricing\VolSurfaceService.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Analytics\Pricing\BlackScholes\BlackScholesPricer.h" />
+    <ClInclude Include="include\Analytics\Pricing\IPricingModel.h" />
+    <ClInclude Include="include\Analytics\Pricing\PricingTypes.h" />
+    <ClInclude Include="include\Database\DatabaseTypes.h" />
+    <ClInclude Include="include\Database\IDatabaseConnection.h" />
+    <ClInclude Include="include\Database\InsertService.h" />
+    <ClInclude Include="include\Database\PostgresConnection.h" />
+    <ClInclude Include="include\Database\QueryService.h" />
+    <ClInclude Include="include\Products\Equity\IEquityProduct.h" />
+    <ClInclude Include="include\Products\Equity\Options\Asian\IAsianOption.h" />
+    <ClInclude Include="include\Products\Equity\Options\Barrier\IBarrierOption.h" />
+    <ClInclude Include="include\Products\Equity\Options\European\EuropeanVanillaOption.h" />
+    <ClInclude Include="include\Products\Equity\Options\Exercise\EuropeanExercise.h" />
+    <ClInclude Include="include\Products\Equity\Options\Exercise\IExerciseRule.h" />
+    <ClInclude Include="include\Products\Equity\Options\IOptionProduct.h" />
+    <ClInclude Include="include\Products\Equity\Options\OptionTypes.h" />
+    <ClInclude Include="include\Products\Equity\Options\PathFeatures\IPathFeature.h" />
+    <ClInclude Include="include\Products\Equity\Options\Payoffs\IPayoff.h" />
+    <ClInclude Include="include\Products\Equity\Options\Payoffs\VanillaPayoff.h" />
+    <ClInclude Include="include\Products\IProduct.h" />
+    <ClInclude Include="include\Services\Pricing\ITradePricingRepository.h" />
+    <ClInclude Include="include\Services\Pricing\PostgresTradePricingRepository.h" />
+    <ClInclude Include="include\Services\Pricing\PricingApplicationService.h" />
+    <ClInclude Include="include\Services\Pricing\TradePricingData.h" />
     <ClInclude Include="include\Risk\BacktestService.h" />
     <ClInclude Include="include\Common\EventMessaging.h" />
     <ClInclude Include="include\Pricing\ForwardPriceService.h" />
