@@ -303,11 +303,24 @@ int main()
         server.Put(R"(/api/v1/trades/([0-9a-fA-F-]+))", [&](const httplib::Request& request, httplib::Response& response) {
             try {
                 const auto trade = store.update(request.matches[1], parseBody(request));
-                trade ? jsonResponse(response, 200, *trade) : jsonResponse(response, 409, {{"error", "trade changed or no longer exists; refresh and retry"}});
-            } catch (const std::exception& error) { jsonResponse(response, 400, {{"error", error.what()}}); }
+                if (trade) {
+                    jsonResponse(response, 200, *trade);
+                }
+                else {
+                    jsonResponse(response, 409, {{"error", "trade changed or no longer exists; refresh and retry"}});
+                }
+            }
+            catch (const std::exception& error) { jsonResponse(response, 400, {{"error", error.what()}}); }
         });
         server.Delete(R"(/api/v1/trades/([0-9a-fA-F-]+))", [&](const httplib::Request& request, httplib::Response& response) {
-            try { store.remove(request.matches[1]) ? response.status = 204 : jsonResponse(response, 404, {{"error", "trade not found"}}); }
+            try {
+                if (store.remove(request.matches[1])) {
+                    response.status = 204;
+                }
+                else {
+                    jsonResponse(response, 404, {{"error", "trade not found"}});
+                }
+            }
             catch (const std::exception& error) { jsonResponse(response, 400, {{"error", error.what()}}); }
         });
         server.Get("/openapi.json", [](const httplib::Request&, httplib::Response& response) {
