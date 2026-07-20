@@ -250,8 +250,14 @@ namespace
 
         void executeCommand(const std::string& sql)
         {
-            auto result = query(sql, {});
-            (void)result;
+            std::lock_guard lock(mutex_);
+            ResultPtr result(PQexec(connection_.get(), sql.c_str()), &PQclear);
+            if (!result) throw std::runtime_error(PQerrorMessage(connection_.get()));
+
+            const auto status = PQresultStatus(result.get());
+            if (status != PGRES_COMMAND_OK) {
+                throw std::runtime_error(PQresultErrorMessage(result.get()));
+            }
         }
     };
 
