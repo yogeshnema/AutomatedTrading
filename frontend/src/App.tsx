@@ -72,7 +72,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">A</span><span><strong>ATLAS</strong><small>TRADING SYSTEMS</small></span></div>
+        <div className="brand"><span className="brand-mark">A</span><span><strong>VYPYAR</strong><small>TRADING SYSTEMS</small></span></div>
         <nav>{navigation.map(item => <button key={item.id} className={screen === item.id ? 'active' : ''} onClick={() => setScreen(item.id)}><span>{item.glyph}</span>{item.label}</button>)}</nav>
         <div className="sidebar-foot"><span className="pulse" /><div><strong>LOCAL WORKSTATION</strong><small>{readyServices}/4 core services ready</small></div></div>
       </aside>
