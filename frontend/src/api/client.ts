@@ -1,10 +1,38 @@
-import type { Trade, TradeInput } from '../types'
+import type { MarketDataStatus, MarketInstrument, MarketSubscription, Trade, TradeInput } from '../types'
 
 export const endpoints = {
   trades: import.meta.env.VITE_TRADE_LIBRARY_URL ?? '/trade-library',
   pricing: import.meta.env.VITE_PRICING_URL ?? '/pricing',
   risk: import.meta.env.VITE_RISK_URL ?? '/risk',
+  marketData: import.meta.env.VITE_MARKET_DATA_URL ?? '/market-data',
   stream: import.meta.env.VITE_STREAM_URL ?? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/stream`,
+}
+
+export const marketDataApi = {
+  status() {
+    return request<MarketDataStatus>(`${endpoints.marketData}/api/v1/market-data/status`)
+  },
+  async instruments(filters: { search?: string; expiry?: string; optionType?: string } = {}) {
+    const query = new URLSearchParams({ limit: '250' })
+    if (filters.search) query.set('search', filters.search)
+    if (filters.expiry) query.set('expiry', filters.expiry)
+    if (filters.optionType) query.set('optionType', filters.optionType)
+    return (await request<{ items: MarketInstrument[] }>(`${endpoints.marketData}/api/v1/instruments?${query}`)).items
+  },
+  async subscriptions() {
+    return (await request<{ items: MarketSubscription[] }>(`${endpoints.marketData}/api/v1/subscriptions`)).items
+  },
+  subscribe(instrumentToken: number) {
+    return request<MarketSubscription>(`${endpoints.marketData}/api/v1/subscriptions`, {
+      method: 'POST', body: JSON.stringify({ instrumentToken, interval: 'minute' }),
+    })
+  },
+  unsubscribe(instrumentToken: number) {
+    return request<void>(`${endpoints.marketData}/api/v1/subscriptions/${instrumentToken}`, { method: 'DELETE' })
+  },
+  refreshMaster() {
+    return request<{ status: string }>(`${endpoints.marketData}/api/v1/instruments/refresh`, { method: 'POST' })
+  },
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {

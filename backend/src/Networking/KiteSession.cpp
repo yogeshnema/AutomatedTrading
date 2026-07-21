@@ -1,4 +1,5 @@
 #include "Common/KiteSession.h"
+#include "Common/Environment.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -30,6 +31,17 @@ KiteSession KiteSession::fromConfigFile(const std::string& configPath)
     return KiteSession(
         kite.at("api_key").get<std::string>(),
         kite.at("access_token").get<std::string>());
+}
+
+KiteSession KiteSession::fromEnvironment()
+{
+    const auto apiKey = automated_trading::common::environmentValue("KITE_API_KEY");
+    const auto accessToken = automated_trading::common::environmentValue("KITE_ACCESS_TOKEN");
+    if (!apiKey || !accessToken) {
+        throw std::runtime_error(
+            "KITE_API_KEY and KITE_ACCESS_TOKEN must be set in the environment.");
+    }
+    return KiteSession(*apiKey, *accessToken);
 }
 
 const std::string& KiteSession::apiKey() const

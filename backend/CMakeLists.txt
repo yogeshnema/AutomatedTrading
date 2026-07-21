@@ -6,6 +6,7 @@ find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cppzmq CONFIG REQUIRED)
 find_package(PostgreSQL REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(httplib CONFIG QUIET)
 if(NOT httplib_FOUND)
     include(FetchContent)
@@ -133,7 +134,45 @@ target_link_libraries(PricingService
         PostgreSQL::PostgreSQL
 )
 
+add_executable(MarketDataService
+    src/Services/MarketData/main.cpp
+    src/Services/MarketData/MarketDataRepository.cpp
+    src/Services/MarketData/MarketDataPollingService.cpp
+    src/Database/DatabaseTypes.cpp
+    src/Database/PostgresConnection.cpp
+    src/Database/QueryService.cpp
+    src/MarketData/KiteInstrumentService.cpp
+    src/MarketData/KiteMarketDataService.cpp
+    src/MarketData/IMarketDataProvider.cpp
+    src/MarketData/KiteMarketDataProvider.cpp
+    src/MarketData/PolygonMarketDataProvider.cpp
+    src/Networking/KiteSession.cpp
+)
+target_compile_features(MarketDataService PRIVATE cxx_std_20)
+target_include_directories(MarketDataService PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(MarketDataService
+    PRIVATE
+        cpr::cpr
+        httplib::httplib
+        nlohmann_json::nlohmann_json
+        PostgreSQL::PostgreSQL
+)
+
+add_executable(KiteSessionToken
+    src/Tools/KiteSessionToken.cpp
+)
+target_compile_features(KiteSessionToken PRIVATE cxx_std_20)
+target_include_directories(KiteSessionToken PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(KiteSessionToken
+    PRIVATE
+        cpr::cpr
+        nlohmann_json::nlohmann_json
+        OpenSSL::Crypto
+)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(TradeLibraryService PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(PricingService PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(MarketDataService PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(KiteSessionToken PRIVATE -Wall -Wextra -Wpedantic)
 endif()

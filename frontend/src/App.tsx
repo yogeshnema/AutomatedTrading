@@ -1,11 +1,12 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import { calculateRisk, endpoints, priceTrade, serviceHealth, tradeApi } from './api/client'
-import type { ServiceState, Trade, TradeInput, TradeStatus } from './types'
+import { calculateRisk, endpoints, marketDataApi, priceTrade, serviceHealth, tradeApi } from './api/client'
+import type { MarketDataStatus, MarketInstrument, MarketSubscription, ServiceState, Trade, TradeInput, TradeStatus } from './types'
 
-type Screen = 'overview' | 'trades' | 'pricing' | 'risk' | 'services'
+type Screen = 'overview' | 'market-data' | 'trades' | 'pricing' | 'risk' | 'services'
 
 const navigation: { id: Screen; label: string; glyph: string }[] = [
   { id: 'overview', label: 'Overview', glyph: '⌂' },
+  { id: 'market-data', label: 'Market Data', glyph: 'MD' },
   { id: 'trades', label: 'Trade Library', glyph: '≡' },
   { id: 'pricing', label: 'Pricing Lab', glyph: 'ƒ' },
   { id: 'risk', label: 'Risk Studio', glyph: '△' },
@@ -32,6 +33,7 @@ export default function App() {
     { id: 'trade-library', name: 'Trade Library', endpoint: endpoints.trades, status: 'checking' },
     { id: 'pricing', name: 'Pricing', endpoint: endpoints.pricing, status: 'checking' },
     { id: 'risk', name: 'Risk', endpoint: endpoints.risk, status: 'checking' },
+    { id: 'market-data', name: 'Market Data', endpoint: endpoints.marketData, status: 'checking' },
     { id: 'stream', name: 'Market Stream', endpoint: endpoints.stream, status: 'offline' },
   ])
 
@@ -44,7 +46,7 @@ export default function App() {
 
   const checkServices = useCallback(async () => {
     const checks = await Promise.all([
-      ['trade-library', endpoints.trades], ['pricing', endpoints.pricing], ['risk', endpoints.risk],
+      ['trade-library', endpoints.trades], ['pricing', endpoints.pricing], ['risk', endpoints.risk], ['market-data', endpoints.marketData],
     ].map(async ([id, endpoint]) => {
       try { return { id, status: 'ready' as const, latency: await serviceHealth(endpoint) } }
       catch { return { id, status: 'offline' as const } }
@@ -66,7 +68,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="brand"><span className="brand-mark">A</span><span><strong>ATLAS</strong><small>TRADING SYSTEMS</small></span></div>
         <nav>{navigation.map(item => <button key={item.id} className={screen === item.id ? 'active' : ''} onClick={() => setScreen(item.id)}><span>{item.glyph}</span>{item.label}</button>)}</nav>
-        <div className="sidebar-foot"><span className="pulse" /><div><strong>LOCAL WORKSTATION</strong><small>{readyServices}/3 core services ready</small></div></div>
+        <div className="sidebar-foot"><span className="pulse" /><div><strong>LOCAL WORKSTATION</strong><small>{readyServices}/4 core services ready</small></div></div>
       </aside>
 
       <main>
@@ -74,9 +76,10 @@ export default function App() {
           <div><span className="eyebrow">AUTOMATED TRADING / {screen.toUpperCase()}</span><h1>{navigation.find(item => item.id === screen)?.label}</h1></div>
           <div className="market-clock"><span>MARKET</span><strong>{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</strong><small>Asia / Kolkata</small></div>
         </header>
-        {notice && <div className="notice"><strong>Connection note</strong><span>{notice}. Start TradeLibraryService on port 8101 to enable live CRUD.</span><button onClick={() => setNotice(undefined)}>×</button></div>}
+        {notice && <div className="notice"><strong>Connection note</strong><span>{notice}</span><button onClick={() => setNotice(undefined)}>×</button></div>}
 
         {screen === 'overview' && <Overview trades={trades} active={activeTrades} notional={grossNotional} services={services} navigate={setScreen} />}
+        {screen === 'market-data' && <MarketDataScreen notify={setNotice} />}
         {screen === 'trades' && <TradeLibrary trades={trades} loading={loading} refresh={refreshTrades} notify={setNotice} />}
         {screen === 'pricing' && <AnalyticsPanel kind="pricing" trades={trades} notify={setNotice} />}
         {screen === 'risk' && <AnalyticsPanel kind="risk" trades={trades} notify={setNotice} />}
@@ -92,7 +95,7 @@ function Overview({ trades, active, notional, services, navigate }: { trades: Tr
     <div className="metric-grid">
       <Metric label="Trade inventory" value={String(trades.length).padStart(2, '0')} detail={`${active} active`} accent="lime" />
       <Metric label="Gross notional" value={notional ? `₹${(notional / 1_000_000).toFixed(1)}M` : '—'} detail="Across currencies" accent="cyan" />
-      <Metric label="Core services" value={`${services.filter(s => s.status === 'ready').length}/3`} detail="Live readiness" accent="amber" />
+      <Metric label="Core services" value={`${services.filter(s => s.status === 'ready').length}/4`} detail="Live readiness" accent="amber" />
     </div>
     <div className="two-column"><div className="panel"><PanelHead title="Recently updated" action="View library" onClick={() => navigate('trades')} />{trades.slice(0, 5).map(trade => <div className="activity-row" key={trade.id}><span className="instrument">{trade.underlying.slice(0, 3)}</span><div><strong>{trade.name}</strong><small>{trade.productType.replaceAll('_', ' ')}</small></div><span className={statusClass(trade.status)}>{trade.status}</span><time>{trade.updatedAt?.slice(11, 16) ?? '—'}</time></div>)}{trades.length === 0 && <Empty text="No trades have been added yet." />}</div><div className="panel"><PanelHead title="Service fabric" action="Inspect" onClick={() => navigate('services')} />{services.map(service => <div className="service-row" key={service.id}><span className={`service-dot ${service.status}`} /><div><strong>{service.name}</strong><small>{service.endpoint}</small></div><span>{service.status === 'ready' ? `${service.latency} ms` : service.status}</span></div>)}</div></div>
   </section>
@@ -101,6 +104,51 @@ function Overview({ trades, active, notional, services, navigate }: { trades: Tr
 function Metric({ label, value, detail, accent }: { label: string; value: string; detail: string; accent: string }) { return <div className={`metric ${accent}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small><i /></div> }
 function PanelHead({ title, action, onClick }: { title: string; action: string; onClick: () => void }) { return <div className="panel-head"><h3>{title}</h3><button onClick={onClick}>{action} →</button></div> }
 function Empty({ text }: { text: string }) { return <div className="empty"><span>◇</span><p>{text}</p></div> }
+
+function MarketDataScreen({ notify }: { notify: (text?: string) => void }) {
+  const [status, setStatus] = useState<MarketDataStatus>()
+  const [instruments, setInstruments] = useState<MarketInstrument[]>([])
+  const [subscriptions, setSubscriptions] = useState<MarketSubscription[]>([])
+  const [search, setSearch] = useState('')
+  const [expiry, setExpiry] = useState('')
+  const [optionType, setOptionType] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [changing, setChanging] = useState<number>()
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [nextStatus, nextInstruments, nextSubscriptions] = await Promise.all([
+        marketDataApi.status(), marketDataApi.instruments({ search, expiry, optionType }), marketDataApi.subscriptions(),
+      ])
+      setStatus(nextStatus); setInstruments(nextInstruments); setSubscriptions(nextSubscriptions); notify(undefined)
+    } catch (error) { notify(error instanceof Error ? error.message : 'Market Data service unavailable') }
+    finally { setLoading(false) }
+  }, [search, expiry, optionType, notify])
+
+  useEffect(() => { void load() }, [load])
+
+  const toggle = async (instrument: MarketInstrument) => {
+    setChanging(instrument.instrumentToken)
+    try {
+      instrument.subscribed ? await marketDataApi.unsubscribe(instrument.instrumentToken) : await marketDataApi.subscribe(instrument.instrumentToken)
+      await load()
+    } catch (error) { notify(error instanceof Error ? error.message : 'Subscription update failed') }
+    finally { setChanging(undefined) }
+  }
+
+  const refreshMaster = async () => {
+    setLoading(true)
+    try { await marketDataApi.refreshMaster(); await load() }
+    catch (error) { notify(error instanceof Error ? error.message : 'Instrument master refresh failed'); setLoading(false) }
+  }
+
+  return <section className="screen market-data-screen">
+    <div className="market-data-summary"><div><span className="eyebrow">KITE / NFO / NIFTY OPTIONS</span><h2>Instrument subscriptions</h2><p>Choose contracts from the daily Kite instrument master. The backend persists each selection and refreshes its one-minute candles automatically.</p></div><button className="secondary" onClick={() => void refreshMaster()} disabled={loading}>Refresh instrument master</button></div>
+    <div className="metric-grid market-metrics"><Metric label="Instruments" value={status ? status.instrumentCount.toLocaleString('en-IN') : '—'} detail="NIFTY option contracts" accent="cyan" /><Metric label="Subscriptions" value={String(status?.activeSubscriptions ?? 0).padStart(2, '0')} detail={`Polling every ${status?.pollSeconds ?? 60}s`} accent="lime" /><Metric label="Worker" value={status?.workerRunning ? 'LIVE' : 'OFF'} detail={status?.instrumentMasterRefreshedAt ? `Master ${new Date(status.instrumentMasterRefreshedAt).toLocaleString('en-IN')}` : 'Awaiting first refresh'} accent="amber" /></div>
+    <div className="market-layout"><div className="panel market-catalog"><div className="market-filters"><label className="search"><span>⌕</span><input aria-label="Search instruments" placeholder="Search trading symbol…" value={search} onChange={event => setSearch(event.target.value.toUpperCase())} /></label><input aria-label="Expiry" type="date" value={expiry} onChange={event => setExpiry(event.target.value)} /><select aria-label="Option type" value={optionType} onChange={event => setOptionType(event.target.value)}><option value="">Calls + puts</option><option value="CE">Calls</option><option value="PE">Puts</option></select><button className="secondary" onClick={() => void load()}>Search</button></div><div className="table-summary"><div><strong>{instruments.length}</strong><span>matching instruments</span></div><span>Daily vendor master</span></div><div className="trade-table-wrap"><table className="instrument-table"><thead><tr><th>Instrument</th><th>Expiry</th><th>Strike</th><th>Type</th><th>Token</th><th /></tr></thead><tbody>{instruments.map(instrument => <tr key={instrument.instrumentToken}><td><strong>{instrument.tradingSymbol}</strong><small>{instrument.exchange}</small></td><td>{instrument.expiry}</td><td>{instrument.strike.toLocaleString('en-IN')}</td><td><span className={`option-chip ${instrument.optionType.toLowerCase()}`}>{instrument.optionType}</span></td><td><code>{instrument.instrumentToken}</code></td><td><button className={instrument.subscribed ? 'danger compact' : 'primary compact'} disabled={changing === instrument.instrumentToken} onClick={() => void toggle(instrument)}>{changing === instrument.instrumentToken ? 'Working…' : instrument.subscribed ? 'Remove' : 'Subscribe'}</button></td></tr>)}</tbody></table>{loading && <div className="loading-line" />}{!loading && !instruments.length && <Empty text="No instruments match these filters." />}</div></div><aside className="panel subscription-panel"><PanelHead title="Active subscriptions" action="Refresh" onClick={() => void load()} />{subscriptions.map(item => <div className="subscription-row" key={item.instrumentToken}><div><strong>{item.tradingSymbol}</strong><small>{item.expiry} · {item.strike.toLocaleString('en-IN')} · {item.optionType}</small></div><span className={item.lastError ? 'subscription-error' : 'subscription-live'}>{item.lastError ? 'ERROR' : item.lastCandleAt ? 'CURRENT' : 'QUEUED'}</span><time>{item.lastCandleAt ? new Date(item.lastCandleAt).toLocaleTimeString('en-IN') : 'Waiting for first candle'}</time></div>)}{!subscriptions.length && <Empty text="Subscribe to an instrument to start one-minute collection." />}</aside></div>
+  </section>
+}
 
 function TradeLibrary({ trades, loading, refresh, notify }: { trades: Trade[]; loading: boolean; refresh: (search?: string) => Promise<void>; notify: (text?: string) => void }) {
   const [search, setSearch] = useState('')

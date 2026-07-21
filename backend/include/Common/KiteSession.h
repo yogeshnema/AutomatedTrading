@@ -9,6 +9,7 @@ public:
     KiteSession(std::string apiKey, std::string accessToken);
 
     static KiteSession fromConfigFile(const std::string& configPath);
+    static KiteSession fromEnvironment();
 
     const std::string& apiKey() const;
     const std::string& accessToken() const;
