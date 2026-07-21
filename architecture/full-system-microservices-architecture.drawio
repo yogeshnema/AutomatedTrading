@@ -44,7 +44,7 @@
         <mxCell id="pricing" value="Pricing Service&#xa;Swagger / REST quick pricing&#xa;tradeId + valuationDate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
           <mxGeometry x="335" y="60" width="250" height="95" as="geometry"/>
         </mxCell>
-        <mxCell id="analytics" value="Analytics / Risk Service&#xa;Greeks · scenarios · portfolio risk" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
+        <mxCell id="analytics" value="Risk Service / Analytics&#xa;REST: tradeId + valuationDate&#xa;analytic Greeks now · scenarios later&#xa;IRiskEngine isolates CPU / SIMD / CUDA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
           <mxGeometry x="625" y="60" width="250" height="95" as="geometry"/>
         </mxCell>
         <mxCell id="strategy" value="Strategy Service&#xa;signals · trading ideas · packages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="services">
@@ -108,10 +108,10 @@
         <mxCell id="compute" value="Accelerated calculation plane — isolated worker pools" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="450" y="1040" width="1380" height="330" as="geometry"/>
         </mxCell>
-        <mxCell id="cpu" value="CPU Workers&#xa;SIMD / AVX&#xa;CPU affinity · NUMA pinning&#xa;io_uring · batching" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
+        <mxCell id="cpu" value="CPU Risk Workers&#xa;scalar analytic kernel now&#xa;SIMD / AVX batch implementation later&#xa;CPU affinity · NUMA pinning" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
           <mxGeometry x="60" y="70" width="270" height="125" as="geometry"/>
         </mxCell>
-        <mxCell id="gpu" value="GPU Workers&#xa;CUDA Monte Carlo&#xa;large portfolios / scenarios" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
+        <mxCell id="gpu" value="GPU Workers (later)&#xa;CUDA risk batches / Monte Carlo&#xa;large portfolios · surfaces · scenarios&#xa;same IRiskEngine batch contract" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
           <mxGeometry x="380" y="70" width="270" height="125" as="geometry"/>
         </mxCell>
         <mxCell id="fpga" value="FPGA / Kernel-Bypass Workers&#xa;socket bypass · DPDK / AF_XDP&#xa;simulated UDP ingestion first&#xa;hardware pricing/feed path later" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="compute">
@@ -151,6 +151,7 @@
         <mxCell id="e-mq-workers" value="async jobs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="durableMq" target="cpu"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="e-jobs-workers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="jobs" target="modelWorkers"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="e-pricing-postgres" value="trades / snapshots / results" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="pricing" target="postgres"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-risk-postgres" value="trade + market snapshot / persist risk runs later" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="analytics" target="postgres"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="e-services-redis" value="cache / live state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;" edge="1" parent="1" source="analytics" target="redis"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="e-workers-postgres" value="persist output" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="workerNote" target="postgres"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="e-workers-redis" value="update status/cache" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="workerNote" target="redis"><mxGeometry relative="1" as="geometry"/></mxCell>

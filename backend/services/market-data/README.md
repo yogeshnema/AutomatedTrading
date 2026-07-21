@@ -6,6 +6,16 @@ catalogue in PostgreSQL, and polls every enabled subscription for one-minute
 historical candles. A five-minute rolling window is upserted on every cycle so
 late or revised candles do not create duplicates.
 
+Collection follows NSE's weekday session in `Asia/Kolkata`: minute candles are
+collected from 09:15 through 15:30. From 15:35, the service reconciles the full
+one-minute session and persists the provider's daily candle as the EOD record.
+The daily candle is the completion marker, so a service restart or intraday
+outage is repaired before the day is considered complete. Exchange holidays are
+not yet modelled.
+
+Unsubscribing disables future vendor requests but deliberately retains all
+stored minute and daily candles for strategy research and backtesting.
+
 ## Database migration
 
 ```bash
@@ -67,5 +77,10 @@ based; see `backend/database/connection.env.example`.
 - `GET /api/v1/subscriptions`
 - `POST /api/v1/subscriptions`
 - `DELETE /api/v1/subscriptions/{instrumentToken}`
+- `GET /api/v1/instruments/{instrumentToken}/market-data?date=YYYY-MM-DD`
+
+The market-data response contains the stored one-minute series, the EOD candle
+when available, and session statistics (open, high, low, close, absolute and
+percentage change, volume, coverage count, and first/last candle timestamps).
 
 The React development server proxies `/market-data` to port `8201`.

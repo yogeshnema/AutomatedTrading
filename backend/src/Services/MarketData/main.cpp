@@ -14,7 +14,10 @@
 #include <charconv>
 #include <chrono>
 #include <cstdint>
+#include <ctime>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -68,6 +71,42 @@ namespace
                 {"optionType", item.optionType}, {"interval", item.interval}, {"enabled", item.enabled},
                 {"lastRefreshAt", item.lastRefreshAt}, {"lastCandleAt", item.lastCandleAt},
                 {"lastError", item.lastError}};
+    }
+
+    Json candleJson(const CandleRecord& item)
+    {
+        return {{"timestamp", item.timestamp}, {"open", item.open}, {"high", item.high},
+                {"low", item.low}, {"close", item.close}, {"volume", item.volume}};
+    }
+
+    std::string today()
+    {
+        const auto raw = std::time(nullptr);
+        std::tm value{};
+#ifdef _WIN32
+        localtime_s(&value, &raw);
+#else
+        localtime_r(&raw, &value);
+#endif
+        std::ostringstream output;
+        output << std::put_time(&value, "%Y-%m-%d");
+        return output.str();
+    }
+
+    Json marketDataJson(const InstrumentMarketData& data)
+    {
+        Json minuteCandles = Json::array();
+        for (const auto& candle : data.minuteCandles) minuteCandles.push_back(candleJson(candle));
+        Json eod = nullptr;
+        if (data.eodCandle) eod = candleJson(*data.eodCandle);
+        return {{"instrument", instrumentJson(data.instrument)}, {"minuteCandles", minuteCandles},
+                {"eod", eod}, {"summary", {
+                    {"date", data.summary.date}, {"open", data.summary.open}, {"high", data.summary.high},
+                    {"low", data.summary.low}, {"close", data.summary.close},
+                    {"absoluteChange", data.summary.absoluteChange}, {"percentChange", data.summary.percentChange},
+                    {"volume", data.summary.volume}, {"minuteCandleCount", data.summary.minuteCandleCount},
+                    {"firstCandleAt", data.summary.firstCandleAt}, {"lastCandleAt", data.summary.lastCandleAt},
+                    {"eodPersisted", data.summary.eodPersisted}}}};
     }
 }
 
@@ -127,6 +166,14 @@ int main()
                 for (const auto& item : repository.subscriptions()) items.push_back(subscriptionJson(item));
                 json(response, 200, {{"items", items}, {"count", items.size()}});
             } catch (const std::exception& error) { json(response, 500, {{"error", error.what()}}); }
+        });
+        server.Get(R"(/api/v1/instruments/(\d+)/market-data)", [&](const httplib::Request& request, httplib::Response& response) {
+            try {
+                const auto token = std::stoll(request.matches[1].str());
+                const auto date = request.has_param("date") ? request.get_param_value("date") : today();
+                json(response, 200, marketDataJson(repository.instrumentMarketData(token, date)));
+            } catch (const std::invalid_argument& error) { json(response, 404, {{"error", error.what()}}); }
+              catch (const std::exception& error) { json(response, 500, {{"error", error.what()}}); }
         });
         server.Post("/api/v1/subscriptions", [&](const httplib::Request& request, httplib::Response& response) {
             try {

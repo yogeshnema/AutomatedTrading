@@ -28,6 +28,12 @@ namespace automated_trading::services::market_data
                 row.string("option_type"), row.string("interval"), row.string("enabled") == "t",
                 optional(row, "last_refresh_at"), optional(row, "last_candle_at"), optional(row, "last_error")};
         }
+        CandleRecord candleFrom(const database::QueryRow& row)
+        {
+            return {row.string("candle_time"), std::stod(row.string("open")),
+                    std::stod(row.string("high")), std::stod(row.string("low")),
+                    std::stod(row.string("close")), std::stoll(row.string("volume"))};
+        }
         constexpr auto SubscriptionSelect = R"sql(
             SELECT s.instrument_token, m.exchange, m.trading_symbol, m.expiry::text,
                    m.strike::text, m.option_type, s.interval, s.enabled,
@@ -134,7 +140,9 @@ namespace automated_trading::services::market_data
             }
             query.execute(R"sql(
                 UPDATE market_data.subscription SET last_refresh_at=CURRENT_TIMESTAMP,
-                    last_candle_at=(SELECT MAX(candle_time) FROM market_data.candle WHERE provider='kite' AND instrument_token=$1::bigint AND interval=$2),
+                    last_candle_at=CASE WHEN $2='minute' THEN
+                        (SELECT MAX(candle_time) FROM market_data.candle WHERE provider='kite' AND instrument_token=$1::bigint AND interval='minute')
+                        ELSE last_candle_at END,
                     last_error=NULL, updated_at=CURRENT_TIMESTAMP
                  WHERE provider='kite' AND instrument_token=$1::bigint
             )sql", {std::to_string(token), interval});
@@ -145,6 +153,93 @@ namespace automated_trading::services::market_data
     {
         std::scoped_lock lock(mutex_);
         queries_.execute("UPDATE market_data.subscription SET last_refresh_at=CURRENT_TIMESTAMP,last_error=$2,updated_at=CURRENT_TIMESTAMP WHERE provider='kite' AND instrument_token=$1::bigint", {std::to_string(token), error.substr(0, 1000)});
+    }
+
+    InstrumentMarketData MarketDataRepository::instrumentMarketData(std::int64_t token, const std::string& date)
+    {
+        std::scoped_lock lock(mutex_);
+        const auto instrumentRow = queries_.queryOne(R"sql(
+            SELECT m.instrument_token, m.exchange, m.trading_symbol, m.name, m.expiry::text,
+                   m.strike::text, m.option_type, (s.instrument_token IS NOT NULL AND s.enabled)::text AS subscribed,
+                   s.last_refresh_at::text, s.last_error
+              FROM market_data.instrument_master m
+              LEFT JOIN market_data.subscription s ON s.provider=m.provider AND s.instrument_token=m.instrument_token
+             WHERE m.provider='kite' AND m.instrument_token=$1::bigint
+        )sql", {std::to_string(token)});
+        if (!instrumentRow) throw std::invalid_argument("Instrument token was not found in the Kite master.");
+
+        InstrumentMarketData output;
+        output.instrument = instrumentFrom(*instrumentRow);
+        output.summary.date = date;
+        const auto rows = queries_.execute(R"sql(
+            SELECT candle_time::text, open::text, high::text, low::text, close::text, volume::text
+              FROM market_data.candle
+             WHERE provider='kite' AND instrument_token=$1::bigint AND interval='minute'
+               AND (candle_time AT TIME ZONE 'Asia/Kolkata')::date=$2::date
+             ORDER BY candle_time
+        )sql", {std::to_string(token), date});
+        output.minuteCandles.reserve(rows.rows.size());
+        for (const auto& row : rows.rows) output.minuteCandles.push_back(candleFrom(row));
+
+        const auto daily = queries_.queryOne(R"sql(
+            SELECT candle_time::text, open::text, high::text, low::text, close::text, volume::text
+              FROM market_data.candle
+             WHERE provider='kite' AND instrument_token=$1::bigint AND interval='day'
+               AND (candle_time AT TIME ZONE 'Asia/Kolkata')::date=$2::date
+             ORDER BY candle_time DESC LIMIT 1
+        )sql", {std::to_string(token), date});
+        if (daily) output.eodCandle = candleFrom(*daily);
+
+        output.summary.minuteCandleCount = output.minuteCandles.size();
+        output.summary.eodPersisted = output.eodCandle.has_value();
+        const CandleRecord* source = output.eodCandle ? &*output.eodCandle
+            : (output.minuteCandles.empty() ? nullptr : &output.minuteCandles.front());
+        if (source != nullptr) {
+            output.summary.open = source->open;
+            output.summary.high = source->high;
+            output.summary.low = source->low;
+            output.summary.close = source->close;
+            output.summary.volume = source->volume;
+            if (!output.eodCandle) {
+                output.summary.high = output.minuteCandles.front().high;
+                output.summary.low = output.minuteCandles.front().low;
+                output.summary.close = output.minuteCandles.back().close;
+                output.summary.volume = 0;
+                for (const auto& candle : output.minuteCandles) {
+                    output.summary.high = std::max(*output.summary.high, candle.high);
+                    output.summary.low = std::min(*output.summary.low, candle.low);
+                    output.summary.volume += candle.volume;
+                }
+            }
+            output.summary.absoluteChange = *output.summary.close - *output.summary.open;
+            if (*output.summary.open != 0.0)
+                output.summary.percentChange = *output.summary.absoluteChange / *output.summary.open * 100.0;
+        }
+        if (!output.minuteCandles.empty()) {
+            output.summary.firstCandleAt = output.minuteCandles.front().timestamp;
+            output.summary.lastCandleAt = output.minuteCandles.back().timestamp;
+        }
+        return output;
+    }
+
+    bool MarketDataRepository::hasDailyCandle(std::int64_t token, const std::string& date)
+    {
+        std::scoped_lock lock(mutex_);
+        return queries_.queryOne(R"sql(
+            SELECT 1 AS found FROM market_data.candle
+             WHERE provider='kite' AND instrument_token=$1::bigint AND interval='day'
+               AND (candle_time AT TIME ZONE 'Asia/Kolkata')::date=$2::date LIMIT 1
+        )sql", {std::to_string(token), date}).has_value();
+    }
+
+    bool MarketDataRepository::hasMinuteCandle(std::int64_t token, const std::string& date)
+    {
+        std::scoped_lock lock(mutex_);
+        return queries_.queryOne(R"sql(
+            SELECT 1 AS found FROM market_data.candle
+             WHERE provider='kite' AND instrument_token=$1::bigint AND interval='minute'
+               AND (candle_time AT TIME ZONE 'Asia/Kolkata')::date=$2::date LIMIT 1
+        )sql", {std::to_string(token), date}).has_value();
     }
 
     ServiceStatus MarketDataRepository::status(bool workerRunning)

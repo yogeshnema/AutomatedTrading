@@ -110,6 +110,23 @@ if(BUILD_TESTING)
     target_compile_features(PricingApplicationServiceTests PRIVATE cxx_std_20)
     target_include_directories(PricingApplicationServiceTests PRIVATE ${PROJECT_SOURCE_DIR}/include)
     add_test(NAME PricingApplicationServiceTests COMMAND PricingApplicationServiceTests)
+
+    add_executable(RiskEngineTests
+        tests/RiskEngineTests.cpp
+        src/Analytics/Risk/BlackScholes/AnalyticBlackScholesRiskEngine.cpp
+    )
+    target_compile_features(RiskEngineTests PRIVATE cxx_std_20)
+    target_include_directories(RiskEngineTests PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    add_test(NAME RiskEngineTests COMMAND RiskEngineTests)
+
+    add_executable(RiskApplicationServiceTests
+        tests/RiskApplicationServiceTests.cpp
+        src/Services/Risk/RiskApplicationService.cpp
+        src/Analytics/Risk/BlackScholes/AnalyticBlackScholesRiskEngine.cpp
+    )
+    target_compile_features(RiskApplicationServiceTests PRIVATE cxx_std_20)
+    target_include_directories(RiskApplicationServiceTests PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    add_test(NAME RiskApplicationServiceTests COMMAND RiskApplicationServiceTests)
 endif()
 
 add_executable(PricingService
@@ -128,6 +145,24 @@ add_executable(PricingService
 target_compile_features(PricingService PRIVATE cxx_std_20)
 target_include_directories(PricingService PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(PricingService
+    PRIVATE
+        httplib::httplib
+        nlohmann_json::nlohmann_json
+        PostgreSQL::PostgreSQL
+)
+
+add_executable(RiskService
+    src/Services/Risk/main.cpp
+    src/Services/Risk/RiskApplicationService.cpp
+    src/Services/Pricing/PostgresTradePricingRepository.cpp
+    src/Analytics/Risk/BlackScholes/AnalyticBlackScholesRiskEngine.cpp
+    src/Database/DatabaseTypes.cpp
+    src/Database/PostgresConnection.cpp
+    src/Database/QueryService.cpp
+)
+target_compile_features(RiskService PRIVATE cxx_std_20)
+target_include_directories(RiskService PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(RiskService
     PRIVATE
         httplib::httplib
         nlohmann_json::nlohmann_json
@@ -173,6 +208,7 @@ target_link_libraries(KiteSessionToken
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(TradeLibraryService PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(PricingService PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(RiskService PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(MarketDataService PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(KiteSessionToken PRIVATE -Wall -Wextra -Wpedantic)
 endif()

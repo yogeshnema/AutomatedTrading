@@ -28,6 +28,9 @@ namespace automated_trading::services::market_data
         void unsubscribe(std::int64_t instrumentToken);
         void saveCandles(std::int64_t instrumentToken, const std::string& interval, const std::vector<Candle>& candles);
         void markRefreshFailure(std::int64_t instrumentToken, const std::string& error);
+        InstrumentMarketData instrumentMarketData(std::int64_t instrumentToken, const std::string& date);
+        bool hasMinuteCandle(std::int64_t instrumentToken, const std::string& date);
+        bool hasDailyCandle(std::int64_t instrumentToken, const std::string& date);
         ServiceStatus status(bool workerRunning);
         bool isReady();
 

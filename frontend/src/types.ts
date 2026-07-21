@@ -53,3 +53,32 @@ export interface MarketDataStatus {
   instrumentMasterRefreshedAt?: string
   pollSeconds: number
 }
+
+export interface MarketCandle {
+  timestamp: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
+export interface MarketDataSnapshot {
+  instrument: MarketInstrument
+  minuteCandles: MarketCandle[]
+  eod?: MarketCandle | null
+  summary: {
+    date: string
+    open?: number | null
+    high?: number | null
+    low?: number | null
+    close?: number | null
+    absoluteChange?: number | null
+    percentChange?: number | null
+    volume: number
+    minuteCandleCount: number
+    firstCandleAt?: string | null
+    lastCandleAt?: string | null
+    eodPersisted: boolean
+  }
+}

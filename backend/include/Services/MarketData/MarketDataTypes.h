@@ -44,4 +44,38 @@ namespace automated_trading::services::market_data
         std::size_t activeSubscriptions{};
         std::optional<std::string> instrumentMasterRefreshedAt;
     };
+
+    struct CandleRecord
+    {
+        std::string timestamp;
+        double open{};
+        double high{};
+        double low{};
+        double close{};
+        std::int64_t volume{};
+    };
+
+    struct MarketDataSummary
+    {
+        std::string date;
+        std::optional<double> open;
+        std::optional<double> high;
+        std::optional<double> low;
+        std::optional<double> close;
+        std::optional<double> absoluteChange;
+        std::optional<double> percentChange;
+        std::int64_t volume{};
+        std::size_t minuteCandleCount{};
+        std::optional<std::string> firstCandleAt;
+        std::optional<std::string> lastCandleAt;
+        bool eodPersisted{};
+    };
+
+    struct InstrumentMarketData
+    {
+        InstrumentRecord instrument;
+        std::vector<CandleRecord> minuteCandles;
+        std::optional<CandleRecord> eodCandle;
+        MarketDataSummary summary;
+    };
 }

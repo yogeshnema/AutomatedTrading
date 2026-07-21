@@ -1,4 +1,4 @@
-import type { MarketDataStatus, MarketInstrument, MarketSubscription, Trade, TradeInput } from '../types'
+import type { MarketDataSnapshot, MarketDataStatus, MarketInstrument, MarketSubscription, Trade, TradeInput } from '../types'
 
 export const endpoints = {
   trades: import.meta.env.VITE_TRADE_LIBRARY_URL ?? '/trade-library',
@@ -32,6 +32,9 @@ export const marketDataApi = {
   },
   refreshMaster() {
     return request<{ status: string }>(`${endpoints.marketData}/api/v1/instruments/refresh`, { method: 'POST' })
+  },
+  marketData(instrumentToken: number, date: string) {
+    return request<MarketDataSnapshot>(`${endpoints.marketData}/api/v1/instruments/${instrumentToken}/market-data?date=${encodeURIComponent(date)}`)
   },
 }
 

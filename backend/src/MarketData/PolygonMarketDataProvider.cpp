@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cpr/cpr.h>
+#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <nlohmann/json.hpp>
@@ -51,7 +52,12 @@ namespace
     {
         const auto time = static_cast<std::time_t>(milliseconds / 1000);
         std::tm utc{};
+
+#ifdef _WIN32
         gmtime_s(&utc, &time);
+#else
+        gmtime_r(&time, &utc);
+#endif
 
         std::ostringstream output;
         output << std::put_time(&utc, "%Y-%m-%dT%H:%M:%S")
