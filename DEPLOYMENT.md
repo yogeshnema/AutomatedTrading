@@ -26,7 +26,7 @@ ignored by Git. Refresh `KITE_ACCESS_TOKEN` after the daily Kite login.
 ./deploy.sh up
 ```
 
-This is equivalent to build, test, stop, and start. CMake reuses the `build/`
+This is equivalent to build, test, stop, migrate, and start. CMake reuses the `build/`
 directory, so unchanged C++ files are not recompiled. `npm ci` runs only when
 dependencies are missing or `package-lock.json` changed.
 
@@ -40,6 +40,7 @@ dependencies are missing or `package-lock.json` changed.
 ./deploy.sh stop
 ./deploy.sh start
 ./deploy.sh build
+./deploy.sh migrate
 ```
 
 Set `RUN_TESTS=0` only when intentionally skipping the test gate:

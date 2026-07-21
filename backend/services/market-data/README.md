@@ -74,13 +74,53 @@ based; see `backend/database/connection.env.example`.
 - `GET /api/v1/market-data/status`
 - `POST /api/v1/instruments/refresh`
 - `GET /api/v1/instruments?search=NIFTY&expiry=YYYY-MM-DD&optionType=CE`
+- `GET /api/v1/instrument-facets?name=NIFTY&expiry=YYYY-MM-DD&optionType=CE`
 - `GET /api/v1/subscriptions`
 - `POST /api/v1/subscriptions`
 - `DELETE /api/v1/subscriptions/{instrumentToken}`
 - `GET /api/v1/instruments/{instrumentToken}/market-data?date=YYYY-MM-DD`
+- `GET /api/v1/reference-series?type=risk_free_rate`
+- `POST /api/v1/reference-subscriptions`
 
 The market-data response contains the stored one-minute series, the EOD candle
 when available, and session statistics (open, high, low, close, absolute and
 percentage change, volume, coverage count, and first/last candle timestamps).
+
+Instrument subscriptions accept `minute` or `day`. A minute subscription also
+receives the post-close daily candle; an EOD-only `day` request never downgrades
+an existing minute subscription.
+
+## Pricing dependencies
+
+Saving an instrument-master-backed option trade requests four dependencies:
+
+1. The selected option's EOD candle.
+2. The NIFTY 50 underlying close (`NIFTY_50_EOD`).
+3. Contract-scoped implied volatility (`NIFTY_CONTRACT_IV`).
+4. The selected INR rate series, such as `FBIL_MIBOR_ON`.
+
+Reference subscriptions are persisted separately from Kite instrument
+subscriptions. A `requested` status means the dependency is registered, not that
+an observation is ready. FBIL ingestion and the contract-IV derivation worker are
+adapter boundaries still to be implemented. MIFOR is retained for FX-linked use
+cases and is not selected by default for NIFTY options.
+
+For local development, observations can be inserted explicitly. Rates and
+volatility use decimal values, not percentages:
+
+```sql
+INSERT INTO market_data.reference_observation
+    (series_code, scope_key, observed_at, value, source)
+VALUES
+    ('NIFTY_50_EOD', 'GLOBAL', CURRENT_TIMESTAMP, 25100.00, 'manual'),
+    ('FBIL_MIBOR_ON', 'GLOBAL', CURRENT_TIMESTAMP, 0.0650, 'manual'),
+    ('NIFTY_CONTRACT_IV', '<kite-instrument-token>', CURRENT_TIMESTAMP, 0.1825, 'manual')
+ON CONFLICT (series_code, scope_key, observed_at) DO UPDATE SET value=EXCLUDED.value;
+```
+
+Once these inputs exist at or before the requested valuation time, Pricing and
+Risk can calculate a `DRAFT` Trade Library option without a normalized confirmed
+trade snapshot. This fallback is intended for the ad-hoc draft workflow; the
+normalized snapshot path remains authoritative for confirmed production trades.
 
 The React development server proxies `/market-data` to port `8201`.

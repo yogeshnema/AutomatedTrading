@@ -22,7 +22,12 @@ namespace automated_trading::services::market_data
             const std::string& search,
             const std::string& expiry,
             const std::string& optionType,
+            const std::string& strike,
             int limit);
+        InstrumentFacets instrumentFacets(
+            const std::string& name,
+            const std::string& expiry,
+            const std::string& optionType);
         std::vector<SubscriptionRecord> subscriptions();
         SubscriptionRecord subscribe(std::int64_t instrumentToken, const std::string& interval);
         void unsubscribe(std::int64_t instrumentToken);
@@ -31,6 +36,8 @@ namespace automated_trading::services::market_data
         InstrumentMarketData instrumentMarketData(std::int64_t instrumentToken, const std::string& date);
         bool hasMinuteCandle(std::int64_t instrumentToken, const std::string& date);
         bool hasDailyCandle(std::int64_t instrumentToken, const std::string& date);
+        std::vector<ReferenceSeriesRecord> referenceSeries(const std::string& seriesType);
+        ReferenceSeriesRecord subscribeReferenceSeries(const std::string& seriesCode);
         ServiceStatus status(bool workerRunning);
         bool isReady();
 

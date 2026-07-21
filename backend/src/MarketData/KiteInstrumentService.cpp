@@ -231,6 +231,8 @@ std::vector<OptionInstrument> KiteInstrumentService::parseOptionInstrumentsFromC
         instrument.name = name;
         instrument.expiry = getField(fields, headerIndex, "expiry");
         instrument.strike = std::stod(getField(fields, headerIndex, "strike"));
+        const auto lotSize = getField(fields, headerIndex, "lot_size");
+        instrument.lotSize = lotSize.empty() ? 1.0 : std::stod(lotSize);
         instrument.optionType = parseOptionType(instrumentType);
 
         instruments.push_back(instrument);

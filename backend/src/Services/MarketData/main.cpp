@@ -60,7 +60,8 @@ namespace
     {
         return {{"instrumentToken", item.instrumentToken}, {"exchange", item.exchange},
                 {"tradingSymbol", item.tradingSymbol}, {"name", item.name}, {"expiry", item.expiry},
-                {"strike", item.strike}, {"optionType", item.optionType}, {"subscribed", item.subscribed},
+                {"strike", item.strike}, {"lotSize", item.lotSize}, {"optionType", item.optionType},
+                {"subscribed", item.subscribed},
                 {"lastRefreshAt", item.lastRefreshAt}, {"lastError", item.lastError}};
     }
 
@@ -155,10 +156,43 @@ int main()
                 int limit = 200;
                 if (request.has_param("limit")) limit = std::stoi(request.get_param_value("limit"));
                 Json items = Json::array();
-                for (const auto& item : repository.searchInstruments(parameter("search"), parameter("expiry"), parameter("optionType"), limit))
+                for (const auto& item : repository.searchInstruments(parameter("search"), parameter("expiry"),
+                        parameter("optionType"), parameter("strike"), limit))
                     items.push_back(instrumentJson(item));
                 json(response, 200, {{"items", items}, {"count", items.size()}});
             } catch (const std::exception& error) { json(response, 400, {{"error", error.what()}}); }
+        });
+        server.Get("/api/v1/instrument-facets", [&](const httplib::Request& request, httplib::Response& response) {
+            try {
+                const auto parameter = [&](const char* name) { return request.has_param(name) ? request.get_param_value(name) : std::string{}; };
+                const auto facets = repository.instrumentFacets(parameter("name"), parameter("expiry"), parameter("optionType"));
+                json(response, 200, {{"names", facets.names}, {"expiries", facets.expiries},
+                    {"strikes", facets.strikes}, {"optionTypes", facets.optionTypes}});
+            } catch (const std::exception& error) { json(response, 500, {{"error", error.what()}}); }
+        });
+        server.Get("/api/v1/reference-series", [&](const httplib::Request& request, httplib::Response& response) {
+            try {
+                const auto type = request.has_param("type") ? request.get_param_value("type") : std::string{};
+                Json items = Json::array();
+                for (const auto& item : repository.referenceSeries(type)) items.push_back({
+                    {"seriesCode", item.seriesCode}, {"seriesType", item.seriesType}, {"displayName", item.displayName},
+                    {"provider", item.provider}, {"currency", item.currency}, {"tenor", item.tenor},
+                    {"acquisitionMode", item.acquisitionMode}, {"description", item.description},
+                    {"subscribed", item.subscribed}, {"status", item.status},
+                    {"lastObservedAt", item.lastObservedAt}, {"lastError", item.lastError}});
+                json(response, 200, {{"items", items}});
+            } catch (const std::exception& error) { json(response, 500, {{"error", error.what()}}); }
+        });
+        server.Post("/api/v1/reference-subscriptions", [&](const httplib::Request& request, httplib::Response& response) {
+            try {
+                const auto body = Json::parse(request.body);
+                const auto item = repository.subscribeReferenceSeries(body.at("seriesCode").get<std::string>());
+                json(response, 201, {{"seriesCode", item.seriesCode}, {"seriesType", item.seriesType},
+                    {"displayName", item.displayName}, {"provider", item.provider},
+                    {"acquisitionMode", item.acquisitionMode}, {"subscribed", item.subscribed}, {"status", item.status}});
+            } catch (const nlohmann::json::exception& error) { json(response, 400, {{"error", std::string("Invalid JSON payload: ") + error.what()}}); }
+              catch (const std::invalid_argument& error) { json(response, 400, {{"error", error.what()}}); }
+              catch (const std::exception& error) { json(response, 500, {{"error", error.what()}}); }
         });
         server.Get("/api/v1/subscriptions", [&](const httplib::Request&, httplib::Response& response) {
             try {

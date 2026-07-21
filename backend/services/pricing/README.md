@@ -4,6 +4,11 @@
 and the latest complete market snapshot at or before the requested valuation
 date, then prices the trade through `IPricingModel`.
 
+Confirmed trades use the normalized `trading`, `product`, and `pricing` snapshot
+schemas. Instrument-master-backed `DRAFT`/`ACTIVE` Trade Library options use the
+latest underlying, contract-IV, and rate observations at or before the requested
+valuation time. The service refuses to invent missing market inputs.
+
 ## Environment
 
 The database variables are documented in `database/connection.env.example`.

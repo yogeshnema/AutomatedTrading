@@ -15,9 +15,34 @@ namespace automated_trading::services::market_data
         std::string name;
         std::string expiry;
         double strike{};
+        double lotSize{1.0};
         std::string optionType;
         bool subscribed{};
         std::optional<std::string> lastRefreshAt;
+        std::optional<std::string> lastError;
+    };
+
+    struct InstrumentFacets
+    {
+        std::vector<std::string> names;
+        std::vector<std::string> expiries;
+        std::vector<double> strikes;
+        std::vector<std::string> optionTypes;
+    };
+
+    struct ReferenceSeriesRecord
+    {
+        std::string seriesCode;
+        std::string seriesType;
+        std::string displayName;
+        std::string provider;
+        std::optional<std::string> currency;
+        std::optional<std::string> tenor;
+        std::string acquisitionMode;
+        std::optional<std::string> description;
+        bool subscribed{};
+        std::optional<std::string> status;
+        std::optional<std::string> lastObservedAt;
         std::optional<std::string> lastError;
     };
 

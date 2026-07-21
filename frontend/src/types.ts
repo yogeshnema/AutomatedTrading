@@ -10,11 +10,31 @@ export interface Trade {
   notional: number
   status: TradeStatus
   economics: Record<string, unknown>
+  instrumentToken?: number | null
+  tradingSymbol?: string | null
+  expiry?: string | null
+  strike?: number | null
+  optionType?: 'CE' | 'PE' | null
+  lotSize?: number | null
+  side?: 'buy' | 'sell' | null
+  quantity?: number | null
+  executionPrice?: number | null
+  spotSeriesCode?: string | null
+  impliedVolSeriesCode?: string | null
+  rateSeriesCode?: string | null
   createdAt: string
   updatedAt: string
 }
 
-export type TradeInput = Pick<Trade, 'name' | 'productType' | 'underlying' | 'currency' | 'notional' | 'status' | 'economics'> & {
+export interface TradeInput {
+  name: string
+  status: TradeStatus
+  instrumentToken: number
+  side: 'buy' | 'sell'
+  quantity: number
+  executionPrice: number
+  impliedVolSeriesCode: string
+  rateSeriesCode: string
   version?: number
 }
 
@@ -33,16 +53,39 @@ export interface MarketInstrument {
   name: string
   expiry: string
   strike: number
+  lotSize?: number
   optionType: 'CE' | 'PE'
   subscribed: boolean
   lastRefreshAt?: string
   lastError?: string
 }
 
-export interface MarketSubscription extends Omit<MarketInstrument, 'name' | 'subscribed'> {
-  interval: 'minute'
+export interface MarketSubscription extends Omit<MarketInstrument, 'name' | 'subscribed' | 'lotSize'> {
+  interval: 'minute' | 'day'
   enabled: boolean
   lastCandleAt?: string
+}
+
+export interface InstrumentFacets {
+  names: string[]
+  expiries: string[]
+  strikes: number[]
+  optionTypes: Array<'CE' | 'PE'>
+}
+
+export interface ReferenceSeries {
+  seriesCode: string
+  seriesType: 'underlying_spot' | 'implied_volatility' | 'risk_free_rate'
+  displayName: string
+  provider: string
+  currency?: string | null
+  tenor?: string | null
+  acquisitionMode: 'vendor' | 'derived' | 'manual'
+  description?: string | null
+  subscribed: boolean
+  status?: string | null
+  lastObservedAt?: string | null
+  lastError?: string | null
 }
 
 export interface MarketDataStatus {

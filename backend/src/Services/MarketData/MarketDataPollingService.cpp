@@ -105,6 +105,7 @@ namespace automated_trading::services::market_data
         for (const auto& subscription : repository_.subscriptions()) {
             try {
                 if (clock.minuteOfDay <= MarketClose) {
+                    if (subscription.interval == "day") continue;
                     const auto from = repository_.hasMinuteCandle(subscription.instrumentToken, clock.date)
                         ? localTime(now - std::chrono::minutes(5))
                         : clock.date + " 09:15:00";
@@ -118,11 +119,13 @@ namespace automated_trading::services::market_data
                     // re-request the complete minute session so a restart or outage cannot
                     // leave gaps in the history used by strategies and backtests.
                     if (!repository_.hasDailyCandle(subscription.instrumentToken, clock.date)) {
-                        const auto values = candles_.getHistoricalCandles(
-                            static_cast<long>(subscription.instrumentToken), clock.date + " 09:15:00",
-                            clock.date + " 15:30:00", "minute");
-                        repository_.saveCandles(subscription.instrumentToken, "minute", values);
-                        std::this_thread::sleep_for(std::chrono::milliseconds(350));
+                        if (subscription.interval == "minute") {
+                            const auto values = candles_.getHistoricalCandles(
+                                static_cast<long>(subscription.instrumentToken), clock.date + " 09:15:00",
+                                clock.date + " 15:30:00", "minute");
+                            repository_.saveCandles(subscription.instrumentToken, "minute", values);
+                            std::this_thread::sleep_for(std::chrono::milliseconds(350));
+                        }
 
                         const auto daily = candles_.getHistoricalCandles(
                             static_cast<long>(subscription.instrumentToken), clock.date + " 00:00:00",

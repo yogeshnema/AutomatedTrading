@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { calculateRisk, endpoints, marketDataApi, priceTrade, serviceHealth, tradeApi } from './api/client'
-import type { MarketCandle, MarketDataSnapshot, MarketDataStatus, MarketInstrument, MarketSubscription, ServiceState, Trade, TradeInput, TradeStatus } from './types'
+import type { MarketCandle, MarketDataSnapshot, MarketDataStatus, MarketInstrument, MarketSubscription, ReferenceSeries, ServiceState, Trade, TradeInput, TradeStatus } from './types'
+import './trade-editor.css'
 
 type Screen = 'overview' | 'market-data' | 'trades' | 'pricing' | 'risk' | 'services'
 
@@ -14,8 +15,8 @@ const navigation: { id: Screen; label: string; glyph: string }[] = [
 ]
 
 const blankTrade: TradeInput = {
-  name: '', productType: 'EQUITY_OPTION_EUROPEAN', underlying: 'NIFTY', currency: 'INR',
-  notional: 1_000_000, status: 'DRAFT', economics: { optionType: 'CALL', strike: 25000 },
+  name: '', status: 'DRAFT', instrumentToken: 0, side: 'buy', quantity: 1,
+  executionPrice: 0, impliedVolSeriesCode: 'NIFTY_CONTRACT_IV', rateSeriesCode: 'FBIL_MIBOR_ON',
 }
 
 function formatMoney(value: number, currency = 'USD') {
@@ -72,7 +73,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">A</span><span><strong>VYPYAR</strong><small>TRADING SYSTEMS</small></span></div>
+        <div className="brand"><span className="brand-mark">V</span><span><strong>VYPYAR</strong><small>TRADING SYSTEMS</small></span></div>
         <nav>{navigation.map(item => <button key={item.id} className={screen === item.id ? 'active' : ''} onClick={() => setScreen(item.id)}><span>{item.glyph}</span>{item.label}</button>)}</nav>
         <div className="sidebar-foot"><span className="pulse" /><div><strong>LOCAL WORKSTATION</strong><small>{readyServices}/4 core services ready</small></div></div>
       </aside>
@@ -193,15 +194,113 @@ function TradeLibrary({ trades, loading, refresh, notify }: { trades: Trade[]; l
   return <section className="screen">
     <div className="actionbar"><label className="search"><span>⌕</span><input placeholder="Search name, underlying or product…" value={search} onChange={event => { setSearch(event.target.value); void refresh(event.target.value) }} /></label><button className="secondary" onClick={() => void refresh(search)}>Refresh</button><button className="primary" onClick={() => setEditing('new')}>＋ New trade</button></div>
     <div className="panel table-panel"><div className="table-summary"><div><strong>{visible.length}</strong><span>records in library</span></div><span>Version-controlled trade economics</span></div><div className="trade-table-wrap"><table><thead><tr><th>Trade</th><th>Product</th><th>Underlying</th><th>Notional</th><th>Status</th><th>Version</th><th>Updated</th><th /></tr></thead><tbody>{visible.map(trade => <tr key={trade.id}><td><strong>{trade.name}</strong><small>{trade.id.slice(0, 8)}</small></td><td>{trade.productType.replaceAll('_', ' ')}</td><td><span className="ticker">{trade.underlying}</span></td><td>{formatMoney(trade.notional, trade.currency)}</td><td><span className={statusClass(trade.status)}>{trade.status}</span></td><td>v{trade.version}</td><td>{trade.updatedAt?.replace('T', ' ').slice(0, 16)}</td><td><button className="icon-button" aria-label={`Edit ${trade.name}`} onClick={() => setEditing(trade)}>•••</button></td></tr>)}</tbody></table>{loading && <div className="loading-line" />}{!loading && !visible.length && <Empty text="No matching trades. Create the first trade to begin." />}</div></div>
-    {editing && <TradeEditor trade={editing === 'new' ? undefined : editing} close={() => setEditing(null)} saved={() => { setEditing(null); void refresh(search) }} notify={notify} />}
+    {editing && <InstrumentTradeEditor trade={editing === 'new' ? undefined : editing} close={() => setEditing(null)} saved={() => { setEditing(null); void refresh(search) }} notify={notify} />}
   </section>
 }
 
-function TradeEditor({ trade, close, saved, notify }: { trade?: Trade; close: () => void; saved: () => void; notify: (text?: string) => void }) {
-  const [form, setForm] = useState<TradeInput>(trade ? { ...trade } : blankTrade)
-  const [economics, setEconomics] = useState(JSON.stringify(form.economics, null, 2))
+function InstrumentTradeEditor({ trade, close, saved, notify }: { trade?: Trade; close: () => void; saved: () => void; notify: (text?: string) => void }) {
+  const [instrumentName, setInstrumentName] = useState(trade?.underlying ?? '')
+  const [expiry, setExpiry] = useState(trade?.expiry ?? '')
+  const [optionType, setOptionType] = useState(trade?.optionType ?? 'CE')
+  const [strike, setStrike] = useState<number | ''>(trade?.strike ?? '')
+  const [names, setNames] = useState<string[]>([])
+  const [expiries, setExpiries] = useState<string[]>([])
+  const [optionTypes, setOptionTypes] = useState<Array<'CE' | 'PE'>>([])
+  const [strikes, setStrikes] = useState<number[]>([])
+  const [contracts, setContracts] = useState<MarketInstrument[]>([])
+  const [instrumentToken, setInstrumentToken] = useState(trade?.instrumentToken ?? 0)
+  const [series, setSeries] = useState<ReferenceSeries[]>([])
+  const [name, setName] = useState(trade?.name ?? '')
+  const [status, setStatus] = useState<TradeStatus>(trade?.status ?? 'DRAFT')
+  const [side, setSide] = useState<'buy' | 'sell'>(trade?.side ?? 'buy')
+  const [quantity, setQuantity] = useState(trade?.quantity ?? 1)
+  const [executionPrice, setExecutionPrice] = useState(trade?.executionPrice ?? 0)
+  const [impliedVolSeriesCode, setImpliedVolSeriesCode] = useState(trade?.impliedVolSeriesCode ?? 'NIFTY_CONTRACT_IV')
+  const [rateSeriesCode, setRateSeriesCode] = useState(trade?.rateSeriesCode ?? 'FBIL_MIBOR_ON')
   const [saving, setSaving] = useState(false)
-  const update = (key: keyof TradeInput, value: unknown) => setForm(current => ({ ...current, [key]: value }))
+
+  useEffect(() => {
+    Promise.all([marketDataApi.facets(), marketDataApi.referenceSeries()]).then(([facets, values]) => {
+      setNames(facets.names); setSeries(values)
+      setInstrumentName(current => current || facets.names[0] || '')
+    }).catch(error => notify(error instanceof Error ? error.message : 'Instrument master unavailable'))
+  }, [notify])
+
+  useEffect(() => {
+    if (!instrumentName) return
+    marketDataApi.facets({ name: instrumentName }).then(facets => {
+      setExpiries(facets.expiries)
+      setExpiry(current => facets.expiries.includes(current) ? current : facets.expiries[0] || '')
+    }).catch(error => notify(error instanceof Error ? error.message : 'Could not load expiries'))
+  }, [instrumentName, notify])
+
+  useEffect(() => {
+    if (!instrumentName || !expiry) return
+    marketDataApi.facets({ name: instrumentName, expiry }).then(facets => {
+      setOptionTypes(facets.optionTypes)
+      setOptionType(current => facets.optionTypes.includes(current) ? current : facets.optionTypes[0] || 'CE')
+    }).catch(error => notify(error instanceof Error ? error.message : 'Could not load option types'))
+  }, [instrumentName, expiry, notify])
+
+  useEffect(() => {
+    if (!instrumentName || !expiry || !optionType) return
+    marketDataApi.facets({ name: instrumentName, expiry, optionType }).then(facets => {
+      setStrikes(facets.strikes)
+      setStrike(current => current !== '' && facets.strikes.includes(current) ? current : facets.strikes[0] ?? '')
+    }).catch(error => notify(error instanceof Error ? error.message : 'Could not load strikes'))
+  }, [instrumentName, expiry, optionType, notify])
+
+  useEffect(() => {
+    if (!instrumentName || !expiry || !optionType || strike === '') return
+    marketDataApi.instruments({ search: instrumentName, expiry, optionType, strike }).then(items => {
+      setContracts(items)
+      setInstrumentToken(current => items.some(item => item.instrumentToken === current) ? current : items[0]?.instrumentToken ?? 0)
+    }).catch(error => notify(error instanceof Error ? error.message : 'Could not resolve option contract'))
+  }, [instrumentName, expiry, optionType, strike, notify])
+
+  const selected = contracts.find(item => item.instrumentToken === instrumentToken)
+  const impliedVolSeries = series.filter(item => item.seriesType === 'implied_volatility')
+  const rateSeries = series.filter(item => item.seriesType === 'risk_free_rate')
+  const estimatedNotional = (selected?.lotSize ?? trade?.lotSize ?? 1) * quantity * executionPrice
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!instrumentToken) { notify('Select a valid option contract from the instrument master.'); return }
+    setSaving(true)
+    try {
+      const input: TradeInput = { name: name || selected?.tradingSymbol || '', status, instrumentToken, side,
+        quantity, executionPrice, impliedVolSeriesCode, rateSeriesCode, version: trade?.version }
+      trade ? await tradeApi.update(trade.id, input) : await tradeApi.create(input)
+      try {
+        await Promise.all([
+          marketDataApi.subscribe(instrumentToken, 'day'),
+          marketDataApi.subscribeReference('NIFTY_50_EOD'),
+          marketDataApi.subscribeReference(impliedVolSeriesCode),
+          marketDataApi.subscribeReference(rateSeriesCode),
+        ])
+        notify(undefined)
+      } catch (error) {
+        notify(`Trade saved, but one or more pricing-data requests failed: ${error instanceof Error ? error.message : 'unknown error'}`)
+      }
+      saved()
+    } catch (error) { notify(error instanceof Error ? error.message : 'Could not save trade') }
+    finally { setSaving(false) }
+  }
+
+  const remove = async () => {
+    if (!trade || !confirm(`Delete ${trade.name}?`)) return
+    try { await tradeApi.remove(trade.id); saved() }
+    catch (error) { notify(error instanceof Error ? error.message : 'Delete failed') }
+  }
+
+  return <div className="drawer-backdrop" onMouseDown={event => event.target === event.currentTarget && close()}><form className="drawer" onSubmit={submit}><div className="drawer-head"><div><span className="eyebrow">{trade ? `TRADE ${trade.id.slice(0, 8)}` : 'NEW OPTION TRADE'}</span><h2>{trade ? 'Edit option trade' : 'Add option trade'}</h2></div><button type="button" onClick={close}>×</button></div><div className="form-grid"><label className="span-two">Trade name<input value={name} placeholder={selected?.tradingSymbol ?? 'Generated from selected contract'} onChange={event => setName(event.target.value)} /></label><label>Instrument<select required value={instrumentName} onChange={event => setInstrumentName(event.target.value)}><option value="">Select instrument</option>{names.map(value => <option key={value}>{value}</option>)}</select></label><label>Expiry<select required value={expiry} onChange={event => setExpiry(event.target.value)}><option value="">Select expiry</option>{expiries.map(value => <option key={value}>{value}</option>)}</select></label><label>Option type<select required value={optionType} onChange={event => setOptionType(event.target.value as 'CE' | 'PE')}>{optionTypes.map(value => <option key={value} value={value}>{value === 'CE' ? 'Call' : 'Put'}</option>)}</select></label><label>Strike<select required value={strike} onChange={event => setStrike(Number(event.target.value))}><option value="">Select strike</option>{strikes.map(value => <option key={value} value={value}>{value.toLocaleString('en-IN')}</option>)}</select></label><label className="span-two">Resolved contract<select required value={instrumentToken} onChange={event => setInstrumentToken(Number(event.target.value))}><option value={0}>Select contract</option>{contracts.map(value => <option key={value.instrumentToken} value={value.instrumentToken}>{value.tradingSymbol} · lot {value.lotSize}</option>)}</select></label><label>Side<select value={side} onChange={event => setSide(event.target.value as 'buy' | 'sell')}><option value="buy">Buy</option><option value="sell">Sell</option></select></label><label>Status<select value={status} onChange={event => setStatus(event.target.value as TradeStatus)}><option>DRAFT</option><option>ACTIVE</option><option>MATURED</option><option>CANCELLED</option></select></label><label>Quantity / lots<input required min="0.000001" step="any" type="number" value={quantity} onChange={event => setQuantity(Number(event.target.value))} /></label><label>Buy / execution price<input required min="0" step="any" type="number" value={executionPrice} onChange={event => setExecutionPrice(Number(event.target.value))} /></label><label>Implied volatility source<select required value={impliedVolSeriesCode} onChange={event => setImpliedVolSeriesCode(event.target.value)}>{impliedVolSeries.map(value => <option key={value.seriesCode} value={value.seriesCode}>{value.displayName}</option>)}</select></label><label>Discount-rate source<select required value={rateSeriesCode} onChange={event => setRateSeriesCode(event.target.value)}>{rateSeries.map(value => <option key={value.seriesCode} value={value.seriesCode}>{value.displayName}</option>)}</select></label><div className="span-two dependency-note"><strong>Pricing-data requests created on save</strong><span>Option EOD · NIFTY 50 EOD · contract implied volatility · selected INR rate</span><small>Estimated consideration: {formatMoney(estimatedNotional, 'INR')}. Reference subscriptions remain “requested” until their vendor/derived adapters produce observations.</small></div></div><div className="drawer-actions">{trade && <button type="button" className="danger" onClick={remove}>Delete trade</button>}<span/><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving || !instrumentToken}>{saving ? 'Saving…' : 'Save and request data'}</button></div></form></div>
+}
+
+function TradeEditor({ trade, close, saved, notify }: { trade?: Trade; close: () => void; saved: () => void; notify: (text?: string) => void }) {
+  const [form, setForm] = useState<any>(trade ? { ...trade } : blankTrade)
+  const [economics, setEconomics] = useState(JSON.stringify(form.economics ?? {}, null, 2))
+  const [saving, setSaving] = useState(false)
+  const update = (key: string, value: unknown) => setForm((current: any) => ({ ...current, [key]: value }))
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setSaving(true)
     try {

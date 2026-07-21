@@ -1,4 +1,4 @@
-import type { MarketDataSnapshot, MarketDataStatus, MarketInstrument, MarketSubscription, Trade, TradeInput } from '../types'
+import type { InstrumentFacets, MarketDataSnapshot, MarketDataStatus, MarketInstrument, MarketSubscription, ReferenceSeries, Trade, TradeInput } from '../types'
 
 export const endpoints = {
   trades: import.meta.env.VITE_TRADE_LIBRARY_URL ?? '/trade-library',
@@ -12,19 +12,36 @@ export const marketDataApi = {
   status() {
     return request<MarketDataStatus>(`${endpoints.marketData}/api/v1/market-data/status`)
   },
-  async instruments(filters: { search?: string; expiry?: string; optionType?: string } = {}) {
+  async instruments(filters: { search?: string; expiry?: string; optionType?: string; strike?: number } = {}) {
     const query = new URLSearchParams({ limit: '250' })
     if (filters.search) query.set('search', filters.search)
     if (filters.expiry) query.set('expiry', filters.expiry)
     if (filters.optionType) query.set('optionType', filters.optionType)
+    if (filters.strike != null) query.set('strike', String(filters.strike))
     return (await request<{ items: MarketInstrument[] }>(`${endpoints.marketData}/api/v1/instruments?${query}`)).items
   },
   async subscriptions() {
     return (await request<{ items: MarketSubscription[] }>(`${endpoints.marketData}/api/v1/subscriptions`)).items
   },
-  subscribe(instrumentToken: number) {
+  facets(filters: { name?: string; expiry?: string; optionType?: string } = {}) {
+    const query = new URLSearchParams()
+    if (filters.name) query.set('name', filters.name)
+    if (filters.expiry) query.set('expiry', filters.expiry)
+    if (filters.optionType) query.set('optionType', filters.optionType)
+    return request<InstrumentFacets>(`${endpoints.marketData}/api/v1/instrument-facets?${query}`)
+  },
+  subscribe(instrumentToken: number, interval: 'minute' | 'day' = 'minute') {
     return request<MarketSubscription>(`${endpoints.marketData}/api/v1/subscriptions`, {
-      method: 'POST', body: JSON.stringify({ instrumentToken, interval: 'minute' }),
+      method: 'POST', body: JSON.stringify({ instrumentToken, interval }),
+    })
+  },
+  async referenceSeries(type?: ReferenceSeries['seriesType']) {
+    const query = type ? `?type=${encodeURIComponent(type)}` : ''
+    return (await request<{ items: ReferenceSeries[] }>(`${endpoints.marketData}/api/v1/reference-series${query}`)).items
+  },
+  subscribeReference(seriesCode: string) {
+    return request<ReferenceSeries>(`${endpoints.marketData}/api/v1/reference-subscriptions`, {
+      method: 'POST', body: JSON.stringify({ seriesCode }),
     })
   },
   unsubscribe(instrumentToken: number) {

@@ -17,6 +17,7 @@ struct OptionInstrument
     std::string name;
     std::string expiry;
     double strike;
+    double lotSize{1.0};
     OptionType optionType;
 };
 

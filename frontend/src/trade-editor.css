@@ -1,0 +1,23 @@
+.dependency-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: #0b1715;
+}
+
+.dependency-note strong {
+  font-size: 11px;
+}
+
+.dependency-note span,
+.dependency-note small {
+  color: #7f918c;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.dependency-note small {
+  font-family: DM Mono;
+}

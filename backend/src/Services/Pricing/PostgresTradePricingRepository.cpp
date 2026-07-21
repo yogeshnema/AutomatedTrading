@@ -76,6 +76,60 @@ WHERE t.trade_id = $1::uuid
   AND eot.exercise_style = 'european'
 )sql";
 
+        constexpr std::string_view LoadDraftTradeSql = R"sql(
+WITH selected_trade AS
+(
+    SELECT * FROM trade_library.trades
+     WHERE id=$1::uuid AND status IN ('DRAFT', 'ACTIVE') AND instrument_token IS NOT NULL
+),
+selected_spot AS
+(
+    SELECT o.value
+      FROM market_data.reference_observation o, selected_trade t
+     WHERE o.series_code=t.spot_series_code AND o.scope_key='GLOBAL'
+       AND o.observed_at <= $2::timestamptz
+     ORDER BY o.observed_at DESC LIMIT 1
+),
+selected_rate AS
+(
+    SELECT o.value
+      FROM market_data.reference_observation o, selected_trade t
+     WHERE o.series_code=t.rate_series_code AND o.scope_key='GLOBAL'
+       AND o.observed_at <= $2::timestamptz
+     ORDER BY o.observed_at DESC LIMIT 1
+),
+selected_vol AS
+(
+    SELECT o.value
+      FROM market_data.reference_observation o, selected_trade t
+     WHERE o.series_code=t.implied_vol_series_code
+       AND o.scope_key=t.instrument_token::text
+       AND o.observed_at <= $2::timestamptz
+     ORDER BY o.observed_at DESC LIMIT 1
+)
+SELECT
+    t.id::text AS trade_id,
+    t.id::text AS product_id,
+    t.product_type,
+    t.underlying AS underlying_asset_id,
+    t.currency,
+    CASE WHEN t.option_type='CE' THEN 'call' ELSE 'put' END AS option_right,
+    'european' AS exercise_style,
+    t.strike::text AS strike,
+    EXTRACT(EPOCH FROM ((t.expiry + TIME '15:30') AT TIME ZONE 'Asia/Kolkata'))::bigint::text AS expiry_epoch,
+    t.lot_size::text AS contract_multiplier,
+    (CASE WHEN t.side='buy' THEN t.quantity ELSE -t.quantity END)::text AS signed_quantity,
+    EXTRACT(EPOCH FROM $2::timestamptz)::bigint::text AS valuation_epoch,
+    s.value::text AS spot,
+    r.value::text AS risk_free_rate,
+    '0' AS dividend_yield,
+    v.value::text AS volatility
+FROM selected_trade t
+CROSS JOIN selected_spot s
+CROSS JOIN selected_rate r
+CROSS JOIN selected_vol v
+)sql";
+
         double number(const database::QueryRow& row, std::string_view column)
         {
             try {
@@ -111,12 +165,18 @@ WHERE t.trade_id = $1::uuid
         std::string_view valuationDate)
     {
         std::scoped_lock lock(connectionMutex_);
-        const auto row = queryService_.queryOne(
+        auto row = queryService_.queryOne(
             LoadTradeSql,
             {std::string(tradeId), std::string(valuationDate)});
         if (!row) {
+            row = queryService_.queryOne(
+                LoadDraftTradeSql,
+                {std::string(tradeId), std::string(valuationDate)});
+        }
+        if (!row) {
             throw database::DatabaseError(
-                "No priceable European option or complete market snapshot was found for the request.");
+                "No priceable European option was found. A draft trade requires current underlying, "
+                "contract-IV and rate observations; a confirmed trade requires a complete market snapshot.");
         }
 
         TradePricingInput input;

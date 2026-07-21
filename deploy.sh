@@ -42,6 +42,7 @@ Usage: ./deploy.sh <command> [service]
 Commands:
   up                 Incrementally build, test, then restart the complete stack
   build              Build and test backend and frontend without restarting
+  migrate            Apply idempotent PostgreSQL schema migrations
   start              Start already-built services
   restart            Restart already-built services
   stop               Stop all services started by this script
@@ -147,6 +148,22 @@ build_stack()
 
   log "Building frontend production bundle"
   npm --prefix "${ROOT_DIR}/frontend" run build
+}
+
+apply_migrations()
+{
+  require_command psql
+  load_environment
+  local connection=(
+    -h "${DATABASE_HOST:-127.0.0.1}"
+    -p "${DATABASE_PORT:-5432}"
+    -U "${DATABASE_USER:-trading_owner}"
+    -d "${DATABASE_NAME:-automated_trading}"
+    -v ON_ERROR_STOP=1
+  )
+  log "Applying core and market-data PostgreSQL migrations"
+  PGPASSWORD="${DATABASE_PASSWORD:-}" psql "${connection[@]}" -f "${ROOT_DIR}/backend/database/migrations/ddl.sql"
+  PGPASSWORD="${DATABASE_PASSWORD:-}" psql "${connection[@]}" -f "${ROOT_DIR}/backend/database/migrations/market_data.sql"
 }
 
 start_backend()
@@ -320,9 +337,11 @@ case "${command}" in
     load_environment
     build_stack
     stop_stack
+    apply_migrations
     start_stack
     ;;
   build) build_stack ;;
+  migrate) apply_migrations ;;
   start) start_stack ;;
   restart)
     stop_stack
